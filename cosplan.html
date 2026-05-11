@@ -1878,8 +1878,9 @@
       </div>
       <div class="export-preview" id="export-preview"></div>
       <div class="btn-group" style="margin-top:12px;">
-        <button class="btn btn-primary" id="btn-copy-export">📋 复制文档</button>
-        <button class="btn btn-secondary" id="btn-download-export">💾 下载文件</button>
+        <button class="btn btn-primary" id="btn-share-export">📤 分享文件</button>
+        <button class="btn btn-secondary" id="btn-download-export">💾 下载</button>
+        <button class="btn btn-secondary" id="btn-copy-export">📋 复制</button>
       </div>
     </div>
   </div>
@@ -4294,6 +4295,26 @@ function downloadExportDoc() {
           .catch(function () { fallbackCopy(doc); });
       } else {
         fallbackCopy(doc);
+      }
+    });
+  }
+
+  // 分享文档
+  var shareBtn = document.getElementById('btn-share-export');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function () {
+      var doc = generatePrepDoc();
+      if (!doc) return;
+      var fileName = (document.getElementById('prep-char-select').selectedOptions[0]?.text || '角色') +
+        '-筹备文档.doc';
+      var file = new File(['﻿' + doc], fileName, { type: 'application/msword' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: fileName }).catch(function () {});
+      } else if (navigator.share) {
+        var text = document.getElementById('export-preview').textContent || '';
+        navigator.share({ title: fileName, text: text.substring(0, 200) + '...' }).catch(function () {});
+      } else {
+        showToast('当前浏览器不支持分享，请用下载功能');
       }
     });
   }
