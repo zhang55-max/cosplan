@@ -1879,7 +1879,10 @@
       <div class="export-preview" id="export-preview"></div>
       <div style="font-size:12px;color:#999;text-align:center;margin:8px 0;">👆 预览上方文档内容，确认无误后操作</div>
       <div class="btn-group" style="margin-top:8px;">
-        <button class="btn btn-primary" id="btn-download-export">💾 下载 docx 到手机</button>
+        <button class="btn btn-primary" id="btn-export-image">🖼️ 导出为长图</button>
+        <button class="btn btn-secondary" id="btn-download-export">💾 下载 docx</button>
+      </div>
+      <div class="btn-group" style="margin-top:4px;">
         <button class="btn btn-secondary" id="btn-copy-export">📋 复制全文</button>
       </div>
       <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">
@@ -4123,6 +4126,79 @@ function openExportModal() {
   document.getElementById('modal-export-prep').classList.add('show');
 }
 
+/** 导出为长图（SVG foreignObject → Canvas → PNG） */
+function exportAsImage() {
+  var doc = generatePrepDoc();
+  if (!doc) return;
+  showToast('正在生成图片...');
+
+  // 提取 body 内的 HTML
+  var bodyMatch = doc.match(/<body>([\s\S]*?)<\/body>/);
+  var bodyHtml = bodyMatch ? bodyMatch[1] : doc;
+  // 提取 style
+  var styleMatch = doc.match(/<style>([\s\S]*?)<\/style>/);
+  var styles = styleMatch ? styleMatch[1] : '';
+
+  // 图片宽度 750px（适合手机分享）
+  var imgWidth = 750;
+
+  // 先创建临时容器测量高度
+  var measureDiv = document.createElement('div');
+  measureDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + imgWidth + 'px;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
+  measureDiv.innerHTML = '<style>' + styles + ' body{margin:0;padding:0;}</style>' + bodyHtml;
+  document.body.appendChild(measureDiv);
+  var totalHeight = measureDiv.scrollHeight;
+  document.body.removeChild(measureDiv);
+
+  // 构建 SVG
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + imgWidth + '" height="' + totalHeight + '">' +
+    '<foreignObject width="100%" height="100%">' +
+      '<div xmlns="http://www.w3.org/1999/xhtml" style="font-family:PingFang SC,Microsoft YaHei,sans-serif;">' +
+        '<style>' + styles + ' body{margin:0;padding:0;}</style>' +
+        bodyHtml +
+      '</div>' +
+    '</foreignObject>' +
+  '</svg>';
+
+  var img = new Image();
+  img.onload = function () {
+    var canvas = document.createElement('canvas');
+    canvas.width = imgWidth;
+    canvas.height = totalHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, imgWidth, totalHeight);
+    ctx.drawImage(img, 0, 0);
+
+    // 导出为 PNG
+    canvas.toBlob(function (blob) {
+      var url = URL.createObjectURL(blob);
+      // 手机端：打开新窗口查看/保存图片
+      var w = window.open('');
+      if (w) {
+        w.document.write('<img src="' + url + '" style="max-width:100%;" alt="筹备文档长图"><br>' +
+          '<p style="text-align:center;font-family:sans-serif;">长按图片保存到相册</p>');
+      } else {
+        // 降级：下载
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '筹备文档-' + new Date().toISOString().slice(0, 10) + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('图片已下载');
+        URL.revokeObjectURL(url);
+        return;
+      }
+      showToast('长按图片即可保存到相册');
+    }, 'image/png');
+  };
+  img.onerror = function () {
+    showToast('图片生成失败，请用 docx 下载');
+  };
+  img.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
 /** 下载为 Word 兼容 .doc 文件 */
 function downloadExportDoc() {
   var doc = generatePrepDoc();
@@ -4301,6 +4377,10 @@ function downloadExportDoc() {
       }
     });
   }
+
+  // 导出为长图
+  var imageBtn = document.getElementById('btn-export-image');
+  if (imageBtn) { imageBtn.addEventListener('click', exportAsImage); }
 
   // 下载文档
   var downloadBtn = document.getElementById('btn-download-export');
