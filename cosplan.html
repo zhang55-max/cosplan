@@ -4124,13 +4124,13 @@ function openExportModal() {
 function downloadExportDoc() {
   var doc = generatePrepDoc();
   if (!doc) return;
-  var blob = new Blob(['﻿' + doc], { type: 'application/msword;charset=utf-8' });
+  var blob = new Blob(['﻿' + doc], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   // .doc 扩展名，Word 和手机 WPS 都能直接打开
   var name = document.getElementById('prep-char-select');
   var charName = name && name.selectedOptions[0] ? name.selectedOptions[0].text : '角色';
-  a.download = charName + '-筹备文档-' + new Date().toISOString().slice(0, 10) + '.doc';
+  a.download = charName + '-筹备文档-' + new Date().toISOString().slice(0, 10) + '.docx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -4306,8 +4306,8 @@ function downloadExportDoc() {
       var doc = generatePrepDoc();
       if (!doc) return;
       var fileName = (document.getElementById('prep-char-select').selectedOptions[0]?.text || '角色') +
-        '-筹备文档.doc';
-      var file = new File(['﻿' + doc], fileName, { type: 'application/msword' });
+        '-筹备文档.docx';
+      var file = new File(['﻿' + doc], fileName, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({ files: [file], title: fileName }).catch(function () {});
       } else if (navigator.share) {
