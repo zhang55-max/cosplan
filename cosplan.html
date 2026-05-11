@@ -1424,11 +1424,18 @@
     .overview-item .ov-title { font-size: var(--font-base); }
     .overview-item .ov-title.done { text-decoration: line-through; color: var(--text-muted); }
     .overview-item .ov-thumb {
-      width: 40px; height: 40px;
-      border-radius: var(--radius-sm);
+      width: 72px; height: 72px;
+      border-radius: var(--radius);
       overflow: hidden; flex-shrink: 0; background: var(--bg);
     }
     .overview-item .ov-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ov-img-row {
+      display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+    }
+    .ov-img-full {
+      width: 100%; border-radius: var(--radius); overflow: hidden;
+    }
+    .ov-img-full img { width: 100%; display: block; }
     .overview-summary {
       background: var(--gradient);
       border-radius: var(--radius);
@@ -4122,8 +4129,8 @@ function renderOverview() {
             '<div class="ov-title' + (item.completed ? ' done' : '') + '">' + escapeHtml(item.title) + '</div>' +
             (item.note ? '<div style="font-size:11px;color:var(--text-muted);">' + escapeHtml(item.note) + '</div>' : '') +
             (item.link ? '<a style="font-size:11px;color:var(--primary);" href="' + item.link + '" target="_blank">🔗 链接</a>' : '') +
+            (item.image ? '<div class="ov-img-full" style="margin-top:6px;"><img src="' + item.image + '" alt="参考图" style="width:100%;border-radius:8px;"></div>' : '') +
           '</div>' +
-          (item.image ? '<div class="ov-thumb"><img src="' + item.image + '" alt=""></div>' : '') +
         '</div>';
       }
     }
