@@ -1877,10 +1877,13 @@
         <button class="modal-close" id="btn-close-export">✕</button>
       </div>
       <div class="export-preview" id="export-preview"></div>
-      <div class="btn-group" style="margin-top:12px;">
-        <button class="btn btn-primary" id="btn-share-export">📤 分享文件</button>
-        <button class="btn btn-secondary" id="btn-download-export">💾 下载</button>
-        <button class="btn btn-secondary" id="btn-copy-export">📋 复制</button>
+      <div style="font-size:12px;color:#999;text-align:center;margin:8px 0;">👆 预览上方文档内容，确认无误后操作</div>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-primary" id="btn-download-export">💾 下载 docx 到手机</button>
+        <button class="btn btn-secondary" id="btn-copy-export">📋 复制全文</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">
+        文件将保存到手机「下载/Download」文件夹<br>可在浏览器设置中更改默认下载位置
       </div>
     </div>
   </div>
@@ -4295,26 +4298,6 @@ function downloadExportDoc() {
           .catch(function () { fallbackCopy(doc); });
       } else {
         fallbackCopy(doc);
-      }
-    });
-  }
-
-  // 分享文档
-  var shareBtn = document.getElementById('btn-share-export');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', function () {
-      var doc = generatePrepDoc();
-      if (!doc) return;
-      var fileName = (document.getElementById('prep-char-select').selectedOptions[0]?.text || '角色') +
-        '-筹备文档.docx';
-      var file = new File(['﻿' + doc], fileName, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: fileName }).catch(function () {});
-      } else if (navigator.share) {
-        var text = document.getElementById('export-preview').textContent || '';
-        navigator.share({ title: fileName, text: text.substring(0, 200) + '...' }).catch(function () {});
-      } else {
-        showToast('当前浏览器不支持分享，请用下载功能');
       }
     });
   }
