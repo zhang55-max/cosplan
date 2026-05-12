@@ -1849,7 +1849,67 @@
     .inspiration-item .ins-time {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 4px;
+    }
+    .inspiration-item .ins-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-top: 6px;
+    }
+    .ins-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 2px;
+      opacity: 0.4;
+      transition: opacity var(--transition);
+    }
+    .inspiration-item:hover .ins-actions,
+    .inspiration-item.expanded .ins-actions { opacity: 1; }
+    .ins-edit-btn, .ins-del-btn {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition);
+    }
+    .ins-edit-btn:hover { background: var(--card-hover); }
+    .ins-del-btn:hover { background: var(--card-hover); }
+    .ins-history-badge {
+      font-size: 10px;
+      color: var(--primary);
+      background: rgba(139,63,175,0.08);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+    .ins-history {
+      display: none;
+    }
+    .inspiration-item.expanded .ins-history {
+      display: block;
+    }
+    .ins-history-divider {
+      height: 1px;
+      background: var(--border);
+      margin: var(--space-sm) 0;
+      position: relative;
+    }
+    .ins-history-divider::after {
+      content: '编辑历史';
+      position: absolute;
+      left: 0; top: -9px;
+      font-size: 10px;
+      color: var(--text-muted);
+      background: var(--card);
+      padding-right: 8px;
+    }
+    .ins-history-item .ins-content.old {
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
     }
     .inspiration-show-more {
       text-align: center;
@@ -2695,7 +2755,7 @@ function addInspiration(content) {
   var key = 'cosplan_' + current.id + '_inspirations';
   var list = [];
   try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
-  list.unshift({ id: genId(), content: content, createdAt: Date.now() });
+  list.unshift({ id: genId(), content: content, createdAt: Date.now(), history: [] });
   // 最多保留 200 条
   if (list.length > 200) list = list.slice(0, 200);
   localStorage.setItem(key, JSON.stringify(list));
@@ -2716,6 +2776,26 @@ function deleteInspiration(id) {
   var key = 'cosplan_' + current.id + '_inspirations';
   var list = getInspirations();
   list = list.filter(function (item) { return item.id !== id; });
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+/** 编辑灵感：旧内容推入 history，不覆盖 */
+function editInspiration(id, newContent) {
+  var current = getCurrentUser();
+  if (!current) return;
+  newContent = newContent.trim();
+  if (!newContent) return;
+  var key = 'cosplan_' + current.id + '_inspirations';
+  var list = getInspirations();
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === id) {
+      if (!list[i].history) list[i].history = [];
+      list[i].history.unshift({ content: list[i].content, editedAt: Date.now() });
+      list[i].content = newContent;
+      list[i].createdAt = Date.now(); // 更新主时间戳
+      break;
+    }
+  }
   localStorage.setItem(key, JSON.stringify(list));
 }
 
@@ -2846,15 +2926,35 @@ function renderInspirations() {
     container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--font-sm);text-align:center;padding:8px;">暂无灵感，上方输入框快速记录</div>';
     return;
   }
-  // 只显示最近 5 条
   var showAll = container.getAttribute('data-show-all') === 'true';
   var display = showAll ? list : list.slice(0, 5);
   var html = '';
   for (var i = 0; i < display.length; i++) {
-    html += '<div class="inspiration-item" data-ins-id="' + display[i].id + '">' +
-      '<div class="ins-content">' + escapeHtml(display[i].content) + '</div>' +
-      '<div class="ins-time">' + formatRelativeTime(display[i].createdAt) + '</div>' +
-    '</div>';
+    var item = display[i];
+    var historyCount = (item.history || []).length;
+    html += '<div class="inspiration-item" data-ins-id="' + item.id + '">' +
+      '<div class="ins-content">' + escapeHtml(item.content) + '</div>' +
+      '<div class="ins-meta">' +
+        '<span class="ins-time">' + formatRelativeTime(item.createdAt) + '</span>' +
+        (historyCount > 0 ? '<span class="ins-history-badge">已编辑 ' + historyCount + ' 次</span>' : '') +
+        '<span class="ins-actions">' +
+          '<button class="ins-edit-btn" data-ins-id="' + item.id + '" title="编辑">✏️</button>' +
+          '<button class="ins-del-btn" data-ins-id="' + item.id + '" title="删除">🗑️</button>' +
+        '</span>' +
+      '</div>';
+    // 编辑历史（展开时可见）
+    if ((item.history || []).length > 0) {
+      html += '<div class="ins-history">';
+      for (var h = 0; h < item.history.length; h++) {
+        html += '<div class="ins-history-divider"></div>' +
+          '<div class="ins-history-item">' +
+            '<div class="ins-content old">' + escapeHtml(item.history[h].content) + '</div>' +
+            '<div class="ins-time">' + formatRelativeTime(item.history[h].editedAt) + '</div>' +
+          '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
   }
   if (!showAll && list.length > 5) {
     html += '<div class="inspiration-show-more" id="inspiration-show-more">查看全部 ' + list.length + ' 条灵感</div>';
@@ -2865,28 +2965,50 @@ function renderInspirations() {
   // 展开/收起
   var items = container.querySelectorAll('.inspiration-item');
   for (var j = 0; j < items.length; j++) {
-    items[j].addEventListener('click', function () {
+    items[j].addEventListener('click', function (e) {
+      if (e.target.closest('.ins-edit-btn') || e.target.closest('.ins-del-btn')) return;
       this.classList.toggle('expanded');
     });
   }
-  // 长按删除
-  for (var k = 0; k < items.length; k++) {
-    (function (item) {
-      var timer;
-      item.addEventListener('touchstart', function () {
-        timer = setTimeout(function () {
-          var id = item.getAttribute('data-ins-id');
-          if (confirm('确定要删除这条灵感吗？')) {
-            deleteInspiration(id);
-            renderInspirations();
-            showToast('已删除');
-          }
-        }, 600);
+
+  // 编辑按钮
+  var editBtns = container.querySelectorAll('.ins-edit-btn');
+  for (var e = 0; e < editBtns.length; e++) {
+    (function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var id = btn.getAttribute('data-ins-id');
+        var list2 = getInspirations();
+        var found = null;
+        for (var f = 0; f < list2.length; f++) {
+          if (list2[f].id === id) { found = list2[f]; break; }
+        }
+        var oldContent = found ? found.content : '';
+        var newContent = prompt('编辑灵感（原内容将保留在历史中）', oldContent);
+        if (newContent === null || newContent.trim() === '') return;
+        editInspiration(id, newContent);
+        renderInspirations();
+        showToast('灵感已更新');
       });
-      item.addEventListener('touchend', function () { clearTimeout(timer); });
-      item.addEventListener('touchmove', function () { clearTimeout(timer); });
-    })(items[k]);
+    })(editBtns[e]);
   }
+
+  // 删除按钮
+  var delBtns = container.querySelectorAll('.ins-del-btn');
+  for (var d = 0; d < delBtns.length; d++) {
+    (function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var id = btn.getAttribute('data-ins-id');
+        if (confirm('确定要删除这条灵感吗？')) {
+          deleteInspiration(id);
+          renderInspirations();
+          showToast('已删除');
+        }
+      });
+    })(delBtns[d]);
+  }
+
   // 查看全部
   var moreBtn = container.querySelector('#inspiration-show-more');
   if (moreBtn) {
