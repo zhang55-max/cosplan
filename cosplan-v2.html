@@ -3673,6 +3673,69 @@ function showCharacterDetail(charId) {
   // 状态标签
   var statusLabel = (STATUS_MAP[ch.status] && STATUS_MAP[ch.status].label) || '筹备中';
 
+  // 筹备清单明细
+  var prepDetailHtml = '';
+  var catOrder = ['costume', 'prop', 'location', 'storyboard'];
+  var catNames = { costume: '👗服装', prop: '🔧道具', location: '📍场地', storyboard: '🎬分镜' };
+  for (var cIdx = 0; cIdx < catOrder.length; cIdx++) {
+    var catKey = catOrder[cIdx];
+    var catItems = prepItems.filter(function (p) { return p.category === catKey; });
+    if (catItems.length === 0) continue;
+    prepDetailHtml += '<div style="font-size:12px;color:var(--primary);margin:6px 0 2px;">' + (catNames[catKey] || catKey) + ' (' + catItems.filter(function(p){return p.completed;}).length + '/' + catItems.length + ')</div>';
+    for (var p = 0; p < catItems.length; p++) {
+      var pi = catItems[p];
+      prepDetailHtml += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;">' +
+        '<span style="color:' + (pi.completed ? 'var(--success)' : 'var(--text-muted)') + ';">' + (pi.completed ? '✅' : '⬜') + '</span>' +
+        '<span style="color:var(--text);flex:1;' + (pi.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(pi.title) + '</span>' +
+        (pi.link ? '<a href="' + escapeHtml(pi.link) + '" target="_blank" style="font-size:11px;color:var(--primary);">🔗</a>' : '') +
+      '</div>';
+    }
+  }
+  if (prepDetailHtml === '') prepDetailHtml = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0;">暂无筹备项</div>';
+
+  // 照片缩略图
+  var photos = loadData(getStorageKeys().photos).filter(function (p) { return p.characterId === charId; });
+  var photoHtml = '';
+  if (photos.length === 0) {
+    photoHtml = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0;">暂无照片</div>';
+  } else {
+    photoHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    var maxShow = Math.min(photos.length, 9);
+    for (var ph = 0; ph < maxShow; ph++) {
+      photoHtml += '<div style="width:60px;height:60px;border-radius:6px;overflow:hidden;position:relative;">' +
+        '<img src="' + photos[ph].thumbnail + '" style="width:100%;height:100%;object-fit:cover;">' +
+        '<span style="position:absolute;bottom:2px;right:2px;width:8px;height:8px;border-radius:50%;background:' +
+          (photos[ph].status === 'edited' ? 'var(--success)' : photos[ph].status === 'to_edit' ? 'var(--warning)' : 'var(--danger)') + ';"></span>' +
+      '</div>';
+    }
+    if (photos.length > 9) photoHtml += '<div style="width:60px;height:60px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);">+' + (photos.length - 9) + '</div>';
+    photoHtml += '</div>';
+  }
+
+  // 文案内容
+  var copyHtml = '';
+  var lines = copies.filter(function (c) { return c.type === 'line'; });
+  var tags = copies.filter(function (c) { return c.type === 'tag'; });
+  if (lines.length === 0 && tags.length === 0) {
+    copyHtml = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0;">暂无文案</div>';
+  } else {
+    if (lines.length > 0) {
+      copyHtml += '<div style="font-size:12px;color:var(--primary);margin:6px 0 2px;">💬 台词 (' + lines.length + ')</div>';
+      for (var l = 0; l < Math.min(lines.length, 5); l++) {
+        copyHtml += '<div style="font-size:13px;color:var(--text);padding:2px 0;">' + escapeHtml(lines[l].content) + '</div>';
+      }
+      if (lines.length > 5) copyHtml += '<div style="font-size:11px;color:var(--text-muted);">...还有 ' + (lines.length - 5) + ' 条</div>';
+    }
+    if (tags.length > 0) {
+      copyHtml += '<div style="font-size:12px;color:var(--primary);margin:6px 0 2px;">🏷️ 标签 (' + tags.length + ')</div>';
+      var tagHtml = '';
+      for (var t = 0; t < Math.min(tags.length, 10); t++) {
+        tagHtml += '<span style="display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;background:var(--bg);font-size:11px;color:var(--text-secondary);">#' + escapeHtml(tags[t].content) + '</span>';
+      }
+      copyHtml += tagHtml;
+    }
+  }
+
   // 构建详情 HTML
   var html =
     '<div class="detail-avatar-lg">' + avatarHtml + '</div>' +
@@ -3682,21 +3745,17 @@ function showCharacterDetail(charId) {
       '<span style="font-size:12px;color:var(--primary);">' + statusLabel + '</span></div>' +
     (ch.bio ? '<div class="detail-bio">' + escapeHtml(ch.bio) + '</div>' : '') +
     refHtml +
-    '<div class="detail-section"><h3>📊 关联数据</h3>' +
-      '<div class="detail-stats-row">' +
-        '<div class="detail-stat" id="detail-go-prep">' +
-          '<div class="ds-num">' + prepDone + '/' + prepItems.length + '</div>' +
-          '<div class="ds-label">📋 筹备清单</div>' +
-        '</div>' +
-        '<div class="detail-stat" id="detail-go-photos">' +
-          '<div class="ds-num">' + photoStats.total + '</div>' +
-          '<div class="ds-label">🖼️ 照片素材</div>' +
-        '</div>' +
-        '<div class="detail-stat" id="detail-go-copy">' +
-          '<div class="ds-num">' + copies.length + '</div>' +
-          '<div class="ds-label">✍️ 文案模板</div>' +
-        '</div>' +
-      '</div>' +
+    // === 筹备清单 ===
+    '<div class="detail-section"><h3>📋 筹备清单 <span style="font-size:11px;color:var(--text-muted);">' + prepDone + '/' + prepItems.length + '</span></h3>' +
+      prepDetailHtml +
+    '</div>' +
+    // === 照片素材 ===
+    '<div class="detail-section"><h3>🖼️ 照片素材 <span style="font-size:11px;color:var(--text-muted);">' + photoStats.total + '张</span></h3>' +
+      photoHtml +
+    '</div>' +
+    // === 文案 ===
+    '<div class="detail-section"><h3>✍️ 文案 <span style="font-size:11px;color:var(--text-muted);">' + copies.length + '条</span></h3>' +
+      copyHtml +
     '</div>' +
     '<div class="btn-group">' +
       '<button class="btn btn-primary" id="detail-btn-edit">✏️ 编辑角色</button>' +
