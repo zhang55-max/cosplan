@@ -3684,10 +3684,14 @@ function showCharacterDetail(charId) {
     prepDetailHtml += '<div style="font-size:12px;color:var(--primary);margin:6px 0 2px;">' + (catNames[catKey] || catKey) + ' (' + catItems.filter(function(p){return p.completed;}).length + '/' + catItems.length + ')</div>';
     for (var p = 0; p < catItems.length; p++) {
       var pi = catItems[p];
-      prepDetailHtml += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;">' +
-        '<span style="color:' + (pi.completed ? 'var(--success)' : 'var(--text-muted)') + ';">' + (pi.completed ? '✅' : '⬜') + '</span>' +
-        '<span style="color:var(--text);flex:1;' + (pi.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(pi.title) + '</span>' +
-        (pi.link ? '<a href="' + escapeHtml(pi.link) + '" target="_blank" style="font-size:11px;color:var(--primary);">🔗</a>' : '') +
+      prepDetailHtml += '<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:13px;">' +
+        '<span style="color:' + (pi.completed ? 'var(--success)' : 'var(--text-muted)') + ';flex-shrink:0;">' + (pi.completed ? '✅' : '⬜') + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="color:var(--text);' + (pi.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(pi.title) + '</div>' +
+          (pi.note ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + escapeHtml(pi.note) + '</div>' : '') +
+          (pi.image ? '<img src="' + pi.image + '" style="width:100%;max-width:200px;border-radius:6px;margin-top:4px;" alt="参考图">' : '') +
+        '</div>' +
+        (pi.link ? '<a href="' + escapeHtml(pi.link) + '" target="_blank" style="font-size:11px;color:var(--primary);flex-shrink:0;">🔗</a>' : '') +
       '</div>';
     }
   }
