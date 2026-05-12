@@ -2182,8 +2182,13 @@
         <div class="timeline-empty">暂无记录</div>
       </div>
     </div>
-    <!-- 账户操作 -->
+    <!-- 账号管理 -->
     <div class="settings-section" style="margin-top:var(--space-lg);">
+      <h3>👥 账号管理</h3>
+      <div id="profile-account-list"></div>
+    </div>
+    <!-- 账户操作 -->
+    <div class="settings-section">
       <h3>🔒 账户安全</h3>
       <div class="setting-item">
         <span style="font-size:var(--font-sm);color:var(--text-secondary);">修改密码</span>
@@ -5023,6 +5028,55 @@ function renderProfilePage() {
 
   // 时间线
   renderProfileTimeline();
+
+  // 账号列表
+  renderAccountList();
+}
+
+/** 渲染账号管理列表 */
+function renderAccountList() {
+  var container = document.getElementById('profile-account-list');
+  if (!container) return;
+  var users = getUsers();
+  var current = getCurrentUser();
+  if (users.length <= 1) {
+    container.innerHTML = '<div style="font-size:var(--font-sm);color:var(--text-muted);padding:var(--space-xs) 0;">暂无其他账号</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < users.length; i++) {
+    var isCurrent = current && users[i].id === current.id;
+    html += '<div class="setting-item" style="padding:8px 0;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span>' + (users[i].avatar ? '<img src="' + users[i].avatar + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '🎭') + '</span>' +
+        '<span style="font-size:var(--font-base);color:var(--text);">' + escapeHtml(users[i].username) + '</span>' +
+        (isCurrent ? '<span style="font-size:11px;color:var(--success);">当前</span>' : '') +
+      '</div>' +
+      (isCurrent
+        ? ''
+        : '<button class="btn btn-secondary account-switch-btn" data-user-id="' + users[i].id + '" style="flex:none;padding:4px 12px;font-size:var(--font-sm);">切换</button>'
+      ) +
+    '</div>';
+  }
+  container.innerHTML = html;
+
+  // 绑定切换按钮
+  var btns = container.querySelectorAll('.account-switch-btn');
+  for (var j = 0; j < btns.length; j++) {
+    (function (btn) {
+      btn.addEventListener('click', function () {
+        var uid = btn.getAttribute('data-user-id');
+        var pw = prompt('请输入该账号的密码以切换');
+        if (pw === null) return;
+        loginUser(uid, pw).then(function (user) {
+          showToast('已切换到：' + user.username);
+          renderProfilePage();
+        }).catch(function (err) {
+          showToast('密码错误，切换失败');
+        });
+      });
+    })(btns[j]);
+  }
 }
 
 function renderProfileTimeline() {
