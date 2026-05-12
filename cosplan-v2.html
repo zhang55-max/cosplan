@@ -2850,7 +2850,7 @@ function editInspiration(id, newContent) {
       if (!list[i].history) list[i].history = [];
       list[i].history.unshift({ content: list[i].content, editedAt: Date.now() });
       list[i].content = newContent;
-      list[i].createdAt = Date.now(); // 更新主时间戳
+      // createdAt 保持不变，始终为首次创建时间
       break;
     }
   }
