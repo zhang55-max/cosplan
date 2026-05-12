@@ -2987,51 +2987,41 @@ function renderInspirations() {
   container.innerHTML = html;
   container.setAttribute('data-show-all', showAll ? 'true' : 'false');
 
-  // 展开/收起
+  // 点击条目：展开/收起
   var items = container.querySelectorAll('.inspiration-item');
   for (var j = 0; j < items.length; j++) {
-    items[j].addEventListener('click', function (e) {
-      if (e.target.closest('.ins-edit-btn') || e.target.closest('.ins-del-btn')) return;
-      this.classList.toggle('expanded');
-    });
-  }
-
-  // 编辑按钮
-  var editBtns = container.querySelectorAll('.ins-edit-btn');
-  for (var e = 0; e < editBtns.length; e++) {
-    (function (btn) {
-      btn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        var id = btn.getAttribute('data-ins-id');
-        var list2 = getInspirations();
-        var found = null;
-        for (var f = 0; f < list2.length; f++) {
-          if (list2[f].id === id) { found = list2[f]; break; }
-        }
-        var oldContent = found ? found.content : '';
-        var newContent = prompt('编辑灵感（原内容将保留在历史中）', oldContent);
-        if (newContent === null || newContent.trim() === '') return;
-        editInspiration(id, newContent);
-        renderInspirations();
-        showToast('灵感已更新');
-      });
-    })(editBtns[e]);
-  }
-
-  // 删除按钮
-  var delBtns = container.querySelectorAll('.ins-del-btn');
-  for (var d = 0; d < delBtns.length; d++) {
-    (function (btn) {
-      btn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        var id = btn.getAttribute('data-ins-id');
-        if (confirm('确定要删除这条灵感吗？')) {
-          deleteInspiration(id);
+    (function (item) {
+      item.addEventListener('click', function (e) {
+        // 点编辑按钮
+        if (e.target.closest && e.target.closest('.ins-edit-btn')) {
+          var id = item.getAttribute('data-ins-id');
+          var list2 = getInspirations();
+          var found = null;
+          for (var f = 0; f < list2.length; f++) {
+            if (list2[f].id === id) { found = list2[f]; break; }
+          }
+          var oldContent = found ? found.content : '';
+          var newContent = prompt('编辑灵感（原内容将保留在历史中）', oldContent);
+          if (newContent === null || newContent.trim() === '') return;
+          editInspiration(id, newContent);
           renderInspirations();
-          showToast('已删除');
+          showToast('灵感已更新');
+          return;
         }
+        // 点删除按钮
+        if (e.target.closest && e.target.closest('.ins-del-btn')) {
+          var id = item.getAttribute('data-ins-id');
+          if (confirm('确定要删除这条灵感吗？')) {
+            deleteInspiration(id);
+            renderInspirations();
+            showToast('已删除');
+          }
+          return;
+        }
+        // 否则展开/收起
+        item.classList.toggle('expanded');
       });
-    })(delBtns[d]);
+    })(items[j]);
   }
 
   // 查看全部
@@ -5080,14 +5070,15 @@ function renderAccountList() {
   var btns = container.querySelectorAll('.account-switch-btn');
   for (var j = 0; j < btns.length; j++) {
     (function (btn) {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
         var uid = btn.getAttribute('data-user-id');
-        var pw = prompt('请输入该账号的密码以切换');
-        if (pw === null) return;
+        var pw = prompt('输入密码以切换账号');
+        if (pw === null || pw === '') return;
         loginUser(uid, pw).then(function (user) {
           showToast('已切换到：' + user.username);
-          renderProfilePage();
-        }).catch(function (err) {
+          location.reload();
+        }).catch(function () {
           showToast('密码错误，切换失败');
         });
       });
