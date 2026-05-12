@@ -2542,20 +2542,48 @@
    架构：工具函数 → 数据层 → 视图切换 → 各视图渲染
    ============================================================= */
 
-// ==================== 云端同步配置 ====================
-// 部署 Worker 后，将下方地址改为你的 Worker URL
-var API_URL = 'https://cosplan-api.你的域名.workers.dev';
+// ==================== 云端同步配置 (LeanCloud) ====================
+// 在 leancloud.cn 创建应用后，填入 AppID 和 AppKey
+var LC_APP_ID = '你的AppID';
+var LC_APP_KEY = '你的AppKey';
+var LC_BASE = 'https://' + LC_APP_ID.substring(0, 8) + '.api.lncloud.net';
 
-/** 云端 API 请求封装 */
-function apiCall(path, body) {
-  return fetch(API_URL + path, {
-    method: body ? 'POST' : 'GET',
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined
+/** LeanCloud REST 请求封装 */
+function lcCall(path, method, data, sessionToken) {
+  var headers = {
+    'Content-Type': 'application/json',
+    'X-LC-Id': LC_APP_ID,
+    'X-LC-Key': LC_APP_KEY
+  };
+  if (sessionToken) headers['X-LC-Session'] = sessionToken;
+  return fetch(LC_BASE + path, {
+    method: method,
+    headers: headers,
+    body: data ? JSON.stringify(data) : undefined
   }).then(function (r) { return r.json(); });
 }
 
-/** 云端同步：上传当前用户所有数据 */
+/** 云端注册 */
+function cloudRegister(username, password) {
+  return lcCall('/1.1/users', 'POST', { username: username, password: password });
+}
+
+/** 云端登录 */
+function cloudLogin(username, password) {
+  return lcCall('/1.1/login', 'POST', { username: username, password: password });
+}
+
+/** 云端上传数据 */
+function cloudUpload(sessionToken, data) {
+  return lcCall('/1.1/classes/UserData', 'POST', { data: JSON.stringify(data) }, sessionToken);
+}
+
+/** 云端下载数据 */
+function cloudDownload(sessionToken) {
+  return lcCall('/1.1/classes/UserData?order=-updatedAt&limit=1', 'GET', null, sessionToken);
+}
+
+/** 同步上传：将当前用户全部数据打包上传 */
 function syncUpload() {
   var current = getCurrentUser();
   if (!current) return;
@@ -2566,24 +2594,26 @@ function syncUpload() {
   for (var i = 0; i < storageKeys.length; i++) {
     try { data[storageKeys[i]] = JSON.parse(localStorage.getItem(storageKeys[i]) || '[]'); } catch(e) { data[storageKeys[i]] = []; }
   }
-  // 时间线
   try { data['cosplan_' + current.id + '_timeline'] = JSON.parse(localStorage.getItem('cosplan_' + current.id + '_timeline') || '[]'); } catch(e) {}
-  // 灵感
   try { data['cosplan_' + current.id + '_inspirations'] = JSON.parse(localStorage.getItem('cosplan_' + current.id + '_inspirations') || '[]'); } catch(e) {}
 
-  apiCall('/api/sync/upload', { token: localStorage.getItem('cosplan_cloud_token') || '', data: data }).catch(function(){});
+  var token = localStorage.getItem('cosplan_cloud_token') || '';
+  if (!token) return;
+  cloudUpload(token, data).catch(function () {});
 }
 
-/** 云端同步：下载数据并写入 localStorage */
+/** 同步下载：从云端拉取数据写入 localStorage */
 function syncDownload() {
   var token = localStorage.getItem('cosplan_cloud_token') || '';
   if (!token) return Promise.reject('no token');
-  return apiCall('/api/sync/download?token=' + encodeURIComponent(token)).then(function (res) {
-    if (res.data && Object.keys(res.data).length > 0) {
-      var data = res.data;
-      for (var key in data) {
-        if (data.hasOwnProperty(key)) {
-          localStorage.setItem(key, JSON.stringify(data[key]));
+  return cloudDownload(token).then(function (res) {
+    if (res.results && res.results.length > 0) {
+      var stored = res.results[0];
+      var raw = stored.data;
+      var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      for (var key in parsed) {
+        if (parsed.hasOwnProperty(key)) {
+          localStorage.setItem(key, JSON.stringify(parsed[key]));
         }
       }
     }
@@ -2724,21 +2754,21 @@ function registerUser(username, password) {
     var trimmed = username.trim();
 
     // 优先云端注册
-    return apiCall('/api/register', { username: trimmed, password: password }).then(function (res) {
+    return cloudRegister(trimmed, password).then(function (res) {
       if (res.error) throw new Error(res.error);
-      localStorage.setItem('cosplan_cloud_token', res.token);
-      // 同步云端用户信息到本地 users 表
+      var cloudUser = { id: res.objectId, username: res.username, nickname: res.username, avatar: '' };
+      localStorage.setItem('cosplan_cloud_token', res.sessionToken);
       var users = getUsers();
       var exists = false;
       for (var i = 0; i < users.length; i++) {
-        if (users[i].id === res.user.id) { users[i].username = res.user.username; users[i].nickname = res.user.nickname; exists = true; break; }
+        if (users[i].id === cloudUser.id) { users[i].username = cloudUser.username; users[i].nickname = cloudUser.nickname; exists = true; break; }
       }
       if (!exists) {
-        users.push({ id: res.user.id, username: res.user.username, nickname: res.user.nickname, avatar: res.user.avatar || '', passwordHash: '', salt: '', createdAt: Date.now() });
+        users.push({ id: cloudUser.id, username: cloudUser.username, nickname: cloudUser.nickname, avatar: '', passwordHash: '', salt: '', createdAt: Date.now() });
       }
       saveUsers(users);
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: res.user.id }));
-      return syncDownload().then(function () { return res.user; }).catch(function () { return res.user; });
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: cloudUser.id }));
+      return syncDownload().then(function () { return cloudUser; }).catch(function () { return cloudUser; });
     }).catch(function (err) {
       // 离线 fallback：本地注册
       if (err.message === 'Failed to fetch' || err.message.indexOf('NetworkError') >= 0) {
@@ -2770,21 +2800,21 @@ function loginUser(userId, password) {
     }
 
     // 优先云端登录
-    return apiCall('/api/login', { username: user ? user.username : '', password: password }).then(function (res) {
+    return cloudLogin(user ? user.username : '', password).then(function (res) {
       if (res.error) throw new Error(res.error);
-      localStorage.setItem('cosplan_cloud_token', res.token);
-      // 同步用户信息
+      var cloudUser = { id: res.objectId, username: res.username, nickname: res.username, avatar: '' };
+      localStorage.setItem('cosplan_cloud_token', res.sessionToken);
       var all = getUsers();
       var found = false;
       for (var k = 0; k < all.length; k++) {
-        if (all[k].id === res.user.id) { all[k].username = res.user.username; all[k].nickname = res.user.nickname; found = true; break; }
+        if (all[k].id === cloudUser.id) { all[k].username = cloudUser.username; all[k].nickname = cloudUser.nickname; found = true; break; }
       }
       if (!found) {
-        all.push({ id: res.user.id, username: res.user.username, nickname: res.user.nickname, avatar: res.user.avatar || '', passwordHash: '', salt: '', createdAt: Date.now() });
+        all.push({ id: cloudUser.id, username: cloudUser.username, nickname: cloudUser.nickname, avatar: '', passwordHash: '', salt: '', createdAt: Date.now() });
       }
       saveUsers(all);
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: res.user.id }));
-      return syncDownload().then(function () { return res.user; }).catch(function () { return res.user; });
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: cloudUser.id }));
+      return syncDownload().then(function () { return cloudUser; }).catch(function () { return cloudUser; });
     }).catch(function (err) {
       // 离线 fallback：本地验证
       if (err.message === 'Failed to fetch' || err.message.indexOf('NetworkError') >= 0) {
