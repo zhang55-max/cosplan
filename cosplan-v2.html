@@ -2478,7 +2478,7 @@
       </div>
       <div class="btn-group">
         <button class="btn btn-secondary" id="btn-confirm-cancel">取消</button>
-        <button class="btn btn-danger" id="btn-confirm-ok">确认删除</button>
+        <button class="btn btn-danger" id="btn-confirm-ok">确认</button>
       </div>
     </div>
   </div>
@@ -3536,7 +3536,8 @@ function renderCharacterList() {
             openConfirmDialog(
               '确定要删除这个角色吗？',
               '角色：' + chName + '（关联的筹备清单、照片、文案也会一并删除）',
-              function () { deleteCharacter(id); }
+              function () { deleteCharacter(id); },
+              '确认删除'
             );
             return;
           }
@@ -5359,7 +5360,8 @@ function togglePrepView() {
       openConfirmDialog(
         '确定要删除这个角色吗？',
         '角色：' + chName + '（关联的筹备清单、照片、文案也会一并删除）',
-        function () { deleteCharacter(editingCharId); }
+        function () { deleteCharacter(editingCharId); },
+        '确认删除'
       );
     });
   }
@@ -5368,9 +5370,10 @@ function togglePrepView() {
   var confirmModal = document.getElementById('modal-confirm');
   var confirmCallback = null;
 
-  window.openConfirmDialog = function (text, highlight, callback) {
+  window.openConfirmDialog = function (text, highlight, callback, btnText) {
     document.getElementById('confirm-text').textContent = text;
     document.getElementById('confirm-highlight').textContent = highlight;
+    document.getElementById('btn-confirm-ok').textContent = btnText || '确认';
     confirmCallback = callback;
     confirmModal.classList.add('show');
   };
@@ -5773,7 +5776,7 @@ function togglePrepView() {
   var logoutBtn = document.getElementById('btn-logout-profile');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
-      openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser);
+      openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser, '确认退出');
     });
   }
 
