@@ -2462,6 +2462,7 @@
       </div>
       <div class="btn-group">
         <button class="btn btn-primary" id="btn-save-photo-note">💾 保存备注</button>
+        <button class="btn btn-secondary" id="btn-download-photo">📥 下载原图</button>
         <button class="btn btn-danger" id="btn-delete-photo">🗑️ 删除照片</button>
       </div>
     </div>
@@ -4682,11 +4683,58 @@ function deletePhoto() {
     return p.id !== detailPhotoId;
   });
   saveData(getStorageKeys().photos, photos);
+  // 清理 IndexedDB 中的原图
+  openIDB().then(function (db) {
+    var tx = db.transaction('files', 'readwrite');
+    tx.objectStore('files').delete('photo_orig_' + detailPhotoId);
+    db.close();
+  }).catch(function () {});
   document.getElementById('modal-photo-detail').classList.remove('show');
   detailPhotoId = null;
   showToast('照片已删除');
   renderPhotoPage();
   renderDashboard();
+}
+
+/** 下载照片原图 */
+function downloadPhoto() {
+  if (!detailPhotoId) return;
+  var photo = null;
+  var photos = loadData(getStorageKeys().photos);
+  for (var i = 0; i < photos.length; i++) {
+    if (photos[i].id === detailPhotoId) { photo = photos[i]; break; }
+  }
+  if (!photo) return;
+  // 尝试从 IndexedDB 取原图
+  openIDB().then(function (db) {
+    var tx = db.transaction('files', 'readonly');
+    var req = tx.objectStore('files').get('photo_orig_' + detailPhotoId);
+    req.onsuccess = function () {
+      db.close();
+      if (req.result && req.result.data) {
+        triggerDownload(req.result.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
+      } else {
+        // 无原图回退：下载 localStorage 中的版本
+        triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
+      }
+    };
+    req.onerror = function () {
+      db.close();
+      triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
+    };
+  }).catch(function () {
+    triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
+  });
+}
+
+function triggerDownload(dataUrl, filename) {
+  var a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('下载中...');
 }
 
 /** 上传照片处理 */
@@ -4697,11 +4745,23 @@ function handlePhotoUpload(files) {
   var processed = 0;
   for (var f = 0; f < files.length; f++) {
     (function (file) {
+      // 存原图到 IndexedDB
+      var photoId = genId();
+      var reader = new FileReader();
+      reader.onload = function () {
+        var originalDataUrl = reader.result;
+        openIDB().then(function (db) {
+          var tx = db.transaction('files', 'readwrite');
+          tx.objectStore('files').put({ id: 'photo_orig_' + photoId, data: originalDataUrl });
+          db.close();
+        }).catch(function () {});
+      };
+      reader.readAsDataURL(file);
+
       compressImage(file, 800, 0.55).then(function (fullBase64) {
-        // 生成缩略图
         return compressImage(file, 200, 0.4).then(function (thumbBase64) {
           var photo = {
-            id: genId(),
+            id: photoId,
             characterId: photoSelectedCharId,
             data: fullBase64,
             thumbnail: thumbBase64,
@@ -5939,6 +5999,8 @@ function togglePrepView() {
       openConfirmDialog('确定要删除这张照片吗？', '此操作不可恢复', deletePhoto);
     });
   }
+  var downloadBtn = document.getElementById('btn-download-photo');
+  if (downloadBtn) { downloadBtn.addEventListener('click', downloadPhoto); }
 })();
 
 // ==================== 文案页 + 设置事件绑定 ====================
