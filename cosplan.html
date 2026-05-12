@@ -474,7 +474,7 @@
       transition: opacity var(--transition);
       pointer-events: none;
     }
-    .character-card.long-press-mode .delete-hint { opacity: 1; }
+    .character-card.long-press-mode .delete-hint { opacity: 1; pointer-events: auto; }
 
     /* ========== 浮动操作按钮 ========== */
     .fab {
@@ -2558,7 +2558,23 @@ function renderCharacterList() {
     (function (card) {
       // 单击 → 查看详情
       card.addEventListener('click', function (e) {
+        // 长按模式：点击删除图标触发删除，点击其他地方取消模式
         if (card.classList.contains('long-press-mode')) {
+          if (e.target.closest('.delete-hint')) {
+            var id = card.getAttribute('data-char-id');
+            var chars = loadData(STORAGE_KEYS.characters);
+            var ch = null;
+            for (var k = 0; k < chars.length; k++) {
+              if (chars[k].id === id) { ch = chars[k]; break; }
+            }
+            var chName = ch ? ch.name : '此角色';
+            openConfirmDialog(
+              '确定要删除这个角色吗？',
+              '角色：' + chName + '（关联的筹备清单、照片、文案也会一并删除）',
+              function () { deleteCharacter(id); }
+            );
+            return;
+          }
           card.classList.remove('long-press-mode');
           return;
         }
