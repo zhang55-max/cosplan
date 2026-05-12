@@ -1505,9 +1505,189 @@
       color: var(--text);
       margin-top: var(--space-xs);
     }
+    /* ========== 锁屏（登录/注册） ========== */
+    #lock-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
+    }
+    #lock-screen.hidden { display: none; }
+
+    .lock-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: var(--space-xl) var(--space-lg);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .lock-icon {
+      font-size: 56px;
+      margin-bottom: var(--space-sm);
+    }
+    .lock-title {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: var(--space-xs);
+    }
+    .lock-subtitle {
+      font-size: var(--font-sm);
+      color: var(--text-muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    /* 用户列表 */
+    .lock-user-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .lock-user-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm);
+      border-radius: var(--radius);
+      background: var(--bg);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .lock-user-item:active { background: var(--card-hover); }
+    .lock-user-item .lock-user-emoji { font-size: 32px; }
+    .lock-user-item .lock-user-name {
+      flex: 1; text-align: left; font-size: var(--font-base); color: var(--text); font-weight: 500;
+    }
+    .lock-user-item .lock-user-arrow { color: var(--text-muted); }
+
+    /* 表单 */
+    .lock-input-group {
+      margin-bottom: var(--space-md);
+      text-align: left;
+    }
+    .lock-input-group label {
+      display: block;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xs);
+      font-weight: 500;
+    }
+    .lock-input {
+      width: 100%;
+      padding: var(--space-sm);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: var(--font-base);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 44px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .lock-input:focus { border-color: var(--primary); }
+
+    .lock-btn {
+      width: 100%;
+      padding: var(--space-sm);
+      border: none;
+      border-radius: var(--radius-xl);
+      font-size: var(--font-base);
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+    .lock-btn:active { opacity: 0.8; transform: scale(0.97); }
+    .lock-btn.primary {
+      background: var(--gradient);
+      color: var(--text-on-accent);
+    }
+    .lock-btn.secondary {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      margin-top: var(--space-sm);
+    }
+
+    .lock-error {
+      color: var(--danger);
+      font-size: var(--font-sm);
+      margin-top: var(--space-sm);
+      min-height: 18px;
+    }
+
+    .lock-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin: var(--space-md) 0;
+      color: var(--text-muted);
+      font-size: var(--font-sm);
+    }
+    .lock-divider::before, .lock-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
   </style>
 </head>
 <body>
+
+<!-- ====== 锁屏（登录/注册） ====== -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <div id="lock-icon" class="lock-icon">🎭</div>
+    <div id="lock-title" class="lock-title">CosPlan</div>
+    <div id="lock-subtitle" class="lock-subtitle">COSER 创作助手</div>
+
+    <!-- 用户列表（已有用户时显示） -->
+    <div id="lock-user-list" class="lock-user-list" style="display:none;"></div>
+
+    <!-- 登录表单（选择用户后显示） -->
+    <div id="lock-login-form" style="display:none;">
+      <div class="lock-input-group">
+        <label>密码</label>
+        <input id="lock-login-password" class="lock-input" type="password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button id="lock-login-btn" class="lock-btn primary">登 录</button>
+      <button id="lock-login-back" class="lock-btn secondary">◀ 切换账号</button>
+      <div id="lock-login-error" class="lock-error"></div>
+    </div>
+
+    <!-- 注册表单 -->
+    <div id="lock-register-form" style="display:none;">
+      <div class="lock-input-group">
+        <label>用户名</label>
+        <input id="lock-reg-username" class="lock-input" type="text" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="lock-input-group">
+        <label>密码</label>
+        <input id="lock-reg-password" class="lock-input" type="password" placeholder="请设置密码（至少4位）" autocomplete="new-password">
+      </div>
+      <div class="lock-input-group">
+        <label>确认密码</label>
+        <input id="lock-reg-password2" class="lock-input" type="password" placeholder="再次输入密码" autocomplete="new-password">
+      </div>
+      <button id="lock-reg-btn" class="lock-btn primary">注 册</button>
+      <button id="lock-reg-back" class="lock-btn secondary">◀ 返回</button>
+      <div id="lock-reg-error" class="lock-error"></div>
+    </div>
+
+    <!-- 底部操作 -->
+    <div id="lock-bottom-actions" style="margin-top: var(--space-md);">
+      <button id="lock-show-register" class="lock-btn secondary">创建新账号</button>
+    </div>
+  </div>
+</div>
 
 <div id="app">
 
@@ -1639,6 +1819,21 @@
       <div class="copy-actions">
         <button class="btn btn-primary" id="btn-generate-copy">🔄 生成文案</button>
         <button class="btn btn-secondary" id="btn-copy-text">📋 一键复制</button>
+      </div>
+    </div>
+    <!-- 设置区：账户管理 -->
+    <div class="settings-section" id="settings-account-section">
+      <h3>👤 账户管理</h3>
+      <div class="setting-item" id="setting-current-user">
+        <span style="font-size:var(--font-sm);color:var(--text-secondary);">当前账号：<strong id="setting-username-display"></strong></span>
+      </div>
+      <div class="setting-item">
+        <span style="font-size:var(--font-sm);color:var(--text-secondary);">修改密码</span>
+        <button class="btn btn-secondary" id="btn-change-password" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🔒 修改</button>
+      </div>
+      <div class="setting-item">
+        <span style="font-size:var(--font-sm);color:var(--text-muted);">退出当前账号</span>
+        <button class="btn btn-danger" id="btn-logout" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🚪 退出</button>
       </div>
     </div>
     <!-- 设置区：数据导出/导入 -->
@@ -2026,20 +2221,172 @@ function compressImage(file, maxWidth, quality) {
   });
 }
 
+// ==================== 用户管理 ====================
+
+const USERS_KEY = 'cosplan_users';
+const SESSION_KEY = 'cosplan_session';
+
+/** 读取用户列表 */
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
+/** 保存用户列表 */
+function saveUsers(users) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+/** 生成随机盐值 */
+function generateSalt() {
+  var arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+/** SHA-256 哈希密码 */
+function hashPassword(password, salt) {
+  return crypto.subtle.digest('SHA-256',
+    new TextEncoder().encode(password + '::' + salt)
+  ).then(function (hash) {
+    return Array.from(new Uint8Array(hash), function (b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+  });
+}
+
+/** 获取当前登录用户，未登录返回 null */
+function getCurrentUser() {
+  try {
+    var session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!session || !session.userId) return null;
+    var users = getUsers();
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].id === session.userId) return users[i];
+    }
+  } catch (e) { return null; }
+  return null;
+}
+
+/** 注册新用户，返回 Promise<user> */
+function registerUser(username, password) {
+  return Promise.resolve().then(function () {
+    if (!username || username.trim().length === 0) throw new Error('用户名不能为空');
+    if (username.trim().length > 20) throw new Error('用户名最多20个字符');
+    if (!password || password.length < 4) throw new Error('密码至少需要4位');
+    var users = getUsers();
+    var trimmed = username.trim();
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].username === trimmed) throw new Error('用户名已存在');
+    }
+    var salt = generateSalt();
+    return hashPassword(password, salt).then(function (hash) {
+      var user = {
+        id: genId(),
+        username: trimmed,
+        passwordHash: hash,
+        salt: salt,
+        createdAt: Date.now()
+      };
+      users.push(user);
+      saveUsers(users);
+      // 自动登录
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: user.id }));
+      return user;
+    });
+  });
+}
+
+/** 登录，返回 Promise<user> */
+function loginUser(userId, password) {
+  return Promise.resolve().then(function () {
+    var users = getUsers();
+    var user = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].id === userId) { user = users[i]; break; }
+    }
+    if (!user) throw new Error('用户不存在');
+    return hashPassword(password, user.salt).then(function (hash) {
+      if (hash !== user.passwordHash) throw new Error('密码错误');
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: user.id }));
+      return user;
+    });
+  });
+}
+
+/** 退出登录 */
+function logoutUser() {
+  localStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+/** 修改密码 */
+function changePassword(oldPassword, newPassword) {
+  return Promise.resolve().then(function () {
+    var current = getCurrentUser();
+    if (!current) throw new Error('未登录');
+    if (!newPassword || newPassword.length < 4) throw new Error('新密码至少需要4位');
+    return hashPassword(oldPassword, current.salt).then(function (hash) {
+      if (hash !== current.passwordHash) throw new Error('原密码错误');
+      var newSalt = generateSalt();
+      return hashPassword(newPassword, newSalt).then(function (newHash) {
+        var users = getUsers();
+        for (var i = 0; i < users.length; i++) {
+          if (users[i].id === current.id) {
+            users[i].passwordHash = newHash;
+            users[i].salt = newSalt;
+            break;
+          }
+        }
+        saveUsers(users);
+      });
+    });
+  });
+}
+
+/** 检查是否存在旧版全局数据（无 userId 前缀） */
+function hasLegacyData() {
+  try {
+    return !!(localStorage.getItem('cosplan_characters') ||
+      localStorage.getItem('cosplan_prep_items') ||
+      localStorage.getItem('cosplan_photos') ||
+      localStorage.getItem('cosplan_copies'));
+  } catch (e) { return false; }
+}
+
+/** 迁移旧版数据到用户空间 */
+function migrateLegacyData(userId) {
+  var legacyKeys = ['cosplan_characters', 'cosplan_prep_items', 'cosplan_photos', 'cosplan_copies', 'cosplan_videos', 'cosplan_music'];
+  for (var i = 0; i < legacyKeys.length; i++) {
+    var oldVal = localStorage.getItem(legacyKeys[i]);
+    if (oldVal) {
+      var newKey = 'cosplan_' + userId + '_' + legacyKeys[i].replace('cosplan_', '');
+      localStorage.setItem(newKey, oldVal);
+      localStorage.removeItem(legacyKeys[i]);
+    }
+  }
+}
+
 // ==================== 数据层 ====================
 
-const STORAGE_KEYS = {
-  characters: 'cosplan_characters',
-  prepItems:  'cosplan_prep_items',
-  photos:     'cosplan_photos',
-  videos:     'cosplan_videos',
-  music:      'cosplan_music',
-  copies:     'cosplan_copies'
-};
+/** 根据当前登录用户返回数据存储 keys，未登录返回 null */
+function getStorageKeys() {
+  var current = getCurrentUser();
+  if (!current) return null;
+  var prefix = 'cosplan_' + current.id + '_';
+  return {
+    characters: prefix + 'characters',
+    prepItems:  prefix + 'prep_items',
+    photos:     prefix + 'photos',
+    videos:     prefix + 'videos',
+    music:      prefix + 'music',
+    copies:     prefix + 'copies'
+  };
+}
 
 /** 获取指定角色的筹备完成率 (0-100)，如果没有筹备项返回 0 */
 function getCharacterProgress(charId) {
-  var items = loadData(STORAGE_KEYS.prepItems).filter(function (item) {
+  var items = loadData(getStorageKeys().prepItems).filter(function (item) {
     return item.characterId === charId;
   });
   if (items.length === 0) return 0;
@@ -2049,7 +2396,7 @@ function getCharacterProgress(charId) {
 
 /** 获取指定角色各状态照片数量 */
 function getPhotoStats(charId) {
-  var photos = loadData(STORAGE_KEYS.photos).filter(function (p) {
+  var photos = loadData(getStorageKeys().photos).filter(function (p) {
     return p.characterId === charId;
   });
   return {
@@ -2062,9 +2409,9 @@ function getPhotoStats(charId) {
 
 /** 获取全局统计 */
 function getGlobalStats() {
-  var characters = loadData(STORAGE_KEYS.characters);
-  var prepItems  = loadData(STORAGE_KEYS.prepItems);
-  var photos     = loadData(STORAGE_KEYS.photos);
+  var characters = loadData(getStorageKeys().characters);
+  var prepItems  = loadData(getStorageKeys().prepItems);
+  var photos     = loadData(getStorageKeys().photos);
 
   var inProgress = characters.filter(function (c) {
     return c.status !== 'done';
@@ -2158,7 +2505,7 @@ function switchView(viewName) {
 
 /** 渲染首页全部内容 */
 function renderDashboard() {
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var stats = getGlobalStats();
 
   renderStats(stats);
@@ -2212,7 +2559,7 @@ function renderQuickActions() {
     switchView('photos');
     photoFilter = 'to_edit';
     // 自动选第一个有照片的角色
-    var chars = loadData(STORAGE_KEYS.characters);
+    var chars = loadData(getStorageKeys().characters);
     for (var ci = 0; ci < chars.length; ci++) {
       var ps = getPhotoStats(chars[ci].id);
       if (ps.toEdit > 0) { photoSelectedCharId = chars[ci].id; break; }
@@ -2313,7 +2660,7 @@ function renderProjectList(characters) {
 
 /** 获取某角色未完成筹备项数量 */
 function getPendingPrepCount(charId) {
-  var items = loadData(STORAGE_KEYS.prepItems).filter(function (item) {
+  var items = loadData(getStorageKeys().prepItems).filter(function (item) {
     return item.characterId === charId && !item.completed;
   });
   return items.length;
@@ -2350,7 +2697,7 @@ function openCharacterForm(charId) {
 
   if (charId) {
     // 编辑模式：加载已有数据
-    var characters = loadData(STORAGE_KEYS.characters);
+    var characters = loadData(getStorageKeys().characters);
     var ch = null;
     for (var i = 0; i < characters.length; i++) {
       if (characters[i].id === charId) { ch = characters[i]; break; }
@@ -2452,7 +2799,7 @@ function saveCharacter() {
     createdAt: editingCharId ? undefined : Date.now()
   };
 
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
 
   if (editingCharId) {
     // 编辑：覆盖原有数据，保留 createdAt
@@ -2470,7 +2817,7 @@ function saveCharacter() {
     showToast('角色创建成功');
   }
 
-  saveData(STORAGE_KEYS.characters, characters);
+  saveData(getStorageKeys().characters, characters);
   closeCharacterForm();
   renderCharacterList();
   renderDashboard();
@@ -2478,7 +2825,7 @@ function saveCharacter() {
 
 /** 删除角色（二次确认后执行） */
 function deleteCharacter(charId) {
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var ch = null;
   for (var i = 0; i < characters.length; i++) {
     if (characters[i].id === charId) { ch = characters[i]; break; }
@@ -2486,22 +2833,22 @@ function deleteCharacter(charId) {
   if (!ch) return;
 
   // 级联删除关联数据
-  var prepItems = loadData(STORAGE_KEYS.prepItems).filter(function (item) {
+  var prepItems = loadData(getStorageKeys().prepItems).filter(function (item) {
     return item.characterId !== charId;
   });
-  var photos = loadData(STORAGE_KEYS.photos).filter(function (p) {
+  var photos = loadData(getStorageKeys().photos).filter(function (p) {
     return p.characterId !== charId;
   });
-  var copies = loadData(STORAGE_KEYS.copies).filter(function (c) {
+  var copies = loadData(getStorageKeys().copies).filter(function (c) {
     return c.characterId !== charId;
   });
 
   characters = characters.filter(function (c) { return c.id !== charId; });
 
-  saveData(STORAGE_KEYS.characters, characters);
-  saveData(STORAGE_KEYS.prepItems, prepItems);
-  saveData(STORAGE_KEYS.photos, photos);
-  saveData(STORAGE_KEYS.copies, copies);
+  saveData(getStorageKeys().characters, characters);
+  saveData(getStorageKeys().prepItems, prepItems);
+  saveData(getStorageKeys().photos, photos);
+  saveData(getStorageKeys().copies, copies);
 
   showToast('已删除角色：' + ch.name);
   closeCharacterForm();
@@ -2515,7 +2862,7 @@ function renderCharacterList() {
   var countEl = document.getElementById('char-count-header');
   if (!container) return;
 
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   if (countEl) {
     countEl.textContent = characters.length > 0 ? characters.length + ' 个角色' : '';
   }
@@ -2575,7 +2922,7 @@ function renderCharacterList() {
         if (card.classList.contains('long-press-mode')) {
           if (e.target.closest('.delete-hint')) {
             var id = card.getAttribute('data-char-id');
-            var chars = loadData(STORAGE_KEYS.characters);
+            var chars = loadData(getStorageKeys().characters);
             var ch = null;
             for (var k = 0; k < chars.length; k++) {
               if (chars[k].id === id) { ch = chars[k]; break; }
@@ -2622,7 +2969,7 @@ var detailCharId = null;
 
 /** 显示角色详情 */
 function showCharacterDetail(charId) {
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var ch = null;
   for (var i = 0; i < characters.length; i++) {
     if (characters[i].id === charId) { ch = characters[i]; break; }
@@ -2637,10 +2984,10 @@ function showCharacterDetail(charId) {
   if (!listWrap || !detailView || !detailContent) return;
 
   // 统计
-  var prepItems = loadData(STORAGE_KEYS.prepItems).filter(function (item) { return item.characterId === charId; });
+  var prepItems = loadData(getStorageKeys().prepItems).filter(function (item) { return item.characterId === charId; });
   var prepDone = prepItems.filter(function (item) { return item.completed; }).length;
   var photoStats = getPhotoStats(charId);
-  var copies = loadData(STORAGE_KEYS.copies).filter(function (c) { return c.characterId === charId; });
+  var copies = loadData(getStorageKeys().copies).filter(function (c) { return c.characterId === charId; });
 
   // 头像区
   var avatarHtml;
@@ -2745,7 +3092,7 @@ function hideCharacterDetail() {
 /** 切换角色状态到下一步 */
 function cycleCharacterStatus(charId) {
   var order = ['prep', 'shooting', 'selecting', 'editing', 'done'];
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var newStatus = '';
   for (var i = 0; i < characters.length; i++) {
     if (characters[i].id === charId) {
@@ -2757,7 +3104,7 @@ function cycleCharacterStatus(charId) {
       break;
     }
   }
-  saveData(STORAGE_KEYS.characters, characters);
+  saveData(getStorageKeys().characters, characters);
   var label = (STATUS_MAP[newStatus] || STATUS_MAP.prep).label;
   showToast('状态已切换：' + label);
 }
@@ -2782,7 +3129,7 @@ function renderPrepList() {
   if (!charSelect || !accordionsWrap) return;
 
   // 更新角色选择器
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var opts = '<option value="">-- 请选择角色 --</option>';
   for (var i = 0; i < characters.length; i++) {
     var sel = (characters[i].id === prepSelectedCharId) ? ' selected' : '';
@@ -2805,7 +3152,7 @@ function renderPrepList() {
   }
 
   // 获取该角色的筹备项
-  var allItems = loadData(STORAGE_KEYS.prepItems).filter(function (item) {
+  var allItems = loadData(getStorageKeys().prepItems).filter(function (item) {
     return item.characterId === prepSelectedCharId;
   });
 
@@ -2900,14 +3247,14 @@ function renderPrepList() {
 
 /** 切换筹备项完成状态 */
 function togglePrepComplete(prepId) {
-  var items = loadData(STORAGE_KEYS.prepItems);
+  var items = loadData(getStorageKeys().prepItems);
   for (var i = 0; i < items.length; i++) {
     if (items[i].id === prepId) {
       items[i].completed = !items[i].completed;
       break;
     }
   }
-  saveData(STORAGE_KEYS.prepItems, items);
+  saveData(getStorageKeys().prepItems, items);
   renderPrepList();
   renderDashboard();
 }
@@ -2930,7 +3277,7 @@ function openPrepForm(charId, prepId, category) {
 
   if (prepId) {
     // 编辑模式
-    var items = loadData(STORAGE_KEYS.prepItems);
+    var items = loadData(getStorageKeys().prepItems);
     var item = null;
     for (var i = 0; i < items.length; i++) {
       if (items[i].id === prepId) { item = items[i]; break; }
@@ -3015,7 +3362,7 @@ function savePrepItem() {
     createdAt: Date.now()
   };
 
-  var items = loadData(STORAGE_KEYS.prepItems);
+  var items = loadData(getStorageKeys().prepItems);
 
   if (idField.value) {
     // 编辑：保留 completed 和 createdAt
@@ -3033,7 +3380,7 @@ function savePrepItem() {
     showToast('筹备项已添加');
   }
 
-  saveData(STORAGE_KEYS.prepItems, items);
+  saveData(getStorageKeys().prepItems, items);
   closePrepForm();
   renderPrepList();
   renderDashboard();
@@ -3041,7 +3388,7 @@ function savePrepItem() {
 
 /** 删除筹备项 */
 function deletePrepItem(prepId) {
-  var items = loadData(STORAGE_KEYS.prepItems);
+  var items = loadData(getStorageKeys().prepItems);
   var item = null;
   for (var i = 0; i < items.length; i++) {
     if (items[i].id === prepId) { item = items[i]; break; }
@@ -3049,7 +3396,7 @@ function deletePrepItem(prepId) {
   if (!item) return;
 
   items = items.filter(function (x) { return x.id !== prepId; });
-  saveData(STORAGE_KEYS.prepItems, items);
+  saveData(getStorageKeys().prepItems, items);
   showToast('已删除：' + item.title);
   renderPrepList();
   renderDashboard();
@@ -3085,7 +3432,7 @@ function renderPhotoPage() {
   if (!tabContainer || !gridContainer || !mediaContainer || !statsBar) return;
 
   // 角色 Tab
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var tabsHtml = '';
   for (var i = 0; i < characters.length; i++) {
     var ch = characters[i];
@@ -3135,7 +3482,7 @@ function renderPhotoGrid(photoFilterBar, mediaFilterBar, gridContainer, mediaCon
   uploadBtn.style.display = 'block';
   addMediaBtn.style.display = 'none';
 
-  var allPhotos = loadData(STORAGE_KEYS.photos).filter(function (p) {
+  var allPhotos = loadData(getStorageKeys().photos).filter(function (p) {
     return p.characterId === photoSelectedCharId;
   });
   var photos = photoFilter === 'all' ? allPhotos :
@@ -3190,7 +3537,7 @@ function renderMediaList(photoFilterBar, mediaFilterBar, gridContainer, mediaCon
   uploadBtn.style.display = 'none';
   addMediaBtn.style.display = 'block';
 
-  var storageKey = mediaType === 'video' ? STORAGE_KEYS.videos : STORAGE_KEYS.music;
+  var storageKey = mediaType === 'video' ? getStorageKeys().videos : getStorageKeys().music;
   var allItems = loadData(storageKey).filter(function (m) {
     return m.characterId === photoSelectedCharId;
   });
@@ -3300,7 +3647,7 @@ function openMediaForm(mediaId) {
   audioFileGroup.style.display = isMusic ? 'block' : 'none';
 
   if (mediaId) {
-    var storageKey = isVideo ? STORAGE_KEYS.videos : STORAGE_KEYS.music;
+    var storageKey = isVideo ? getStorageKeys().videos : getStorageKeys().music;
     var items = loadData(storageKey);
     var item = null;
     for (var i = 0; i < items.length; i++) {
@@ -3366,7 +3713,7 @@ function saveMediaItem() {
   var title = document.getElementById('media-title').value.trim();
   if (!title) { showToast('请输入标题'); return; }
 
-  var storageKey = document.getElementById('media-form-type').value === 'video' ? STORAGE_KEYS.videos : STORAGE_KEYS.music;
+  var storageKey = document.getElementById('media-form-type').value === 'video' ? getStorageKeys().videos : getStorageKeys().music;
   var item = {
     id: idField.value || genId(),
     characterId: document.getElementById('media-form-char-id').value,
@@ -3423,7 +3770,7 @@ function saveMediaItem() {
 function deleteMediaItem() {
   var id = document.getElementById('media-form-id').value;
   if (!id) return;
-  var storageKey = document.getElementById('media-form-type').value === 'video' ? STORAGE_KEYS.videos : STORAGE_KEYS.music;
+  var storageKey = document.getElementById('media-form-type').value === 'video' ? getStorageKeys().videos : getStorageKeys().music;
   var items = loadData(storageKey).filter(function (m) { return m.id !== id; });
   saveData(storageKey, items);
   // 同时删除 IndexedDB 中的文件
@@ -3436,7 +3783,7 @@ function deleteMediaItem() {
 
 /** 打开照片详情弹窗 */
 function openPhotoDetail(photoId) {
-  var photos = loadData(STORAGE_KEYS.photos);
+  var photos = loadData(getStorageKeys().photos);
   var photo = null;
   for (var i = 0; i < photos.length; i++) {
     if (photos[i].id === photoId) { photo = photos[i]; break; }
@@ -3466,14 +3813,14 @@ function updatePhotoStatusToggle(status) {
 /** 切换照片状态 */
 function setPhotoStatus(status) {
   if (!detailPhotoId) return;
-  var photos = loadData(STORAGE_KEYS.photos);
+  var photos = loadData(getStorageKeys().photos);
   for (var i = 0; i < photos.length; i++) {
     if (photos[i].id === detailPhotoId) {
       photos[i].status = status;
       break;
     }
   }
-  saveData(STORAGE_KEYS.photos, photos);
+  saveData(getStorageKeys().photos, photos);
   updatePhotoStatusToggle(status);
   renderPhotoPage();
   renderDashboard();
@@ -3483,24 +3830,24 @@ function setPhotoStatus(status) {
 function savePhotoNote() {
   if (!detailPhotoId) return;
   var note = document.getElementById('photo-note').value.trim();
-  var photos = loadData(STORAGE_KEYS.photos);
+  var photos = loadData(getStorageKeys().photos);
   for (var i = 0; i < photos.length; i++) {
     if (photos[i].id === detailPhotoId) {
       photos[i].note = note;
       break;
     }
   }
-  saveData(STORAGE_KEYS.photos, photos);
+  saveData(getStorageKeys().photos, photos);
   showToast('备注已保存');
 }
 
 /** 删除照片 */
 function deletePhoto() {
   if (!detailPhotoId) return;
-  var photos = loadData(STORAGE_KEYS.photos).filter(function (p) {
+  var photos = loadData(getStorageKeys().photos).filter(function (p) {
     return p.id !== detailPhotoId;
   });
-  saveData(STORAGE_KEYS.photos, photos);
+  saveData(getStorageKeys().photos, photos);
   document.getElementById('modal-photo-detail').classList.remove('show');
   detailPhotoId = null;
   showToast('照片已删除');
@@ -3528,9 +3875,9 @@ function handlePhotoUpload(files) {
             note: '',
             createdAt: Date.now()
           };
-          var photos = loadData(STORAGE_KEYS.photos);
+          var photos = loadData(getStorageKeys().photos);
           photos.push(photo);
-          saveData(STORAGE_KEYS.photos, photos);
+          saveData(getStorageKeys().photos, photos);
 
           processed++;
           if (processed === files.length) {
@@ -3773,7 +4120,7 @@ function renderCopyPage() {
   var charSelect = document.getElementById('copy-char-select');
   if (!charSelect) return;
 
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var opts = '<option value="">-- 请选择角色 --</option>';
   for (var i = 0; i < characters.length; i++) {
     var sel = (characters[i].id === copySelectedCharId) ? ' selected' : '';
@@ -3798,7 +4145,7 @@ function renderCopyPage() {
 function renderLineList() {
   var container = document.getElementById('copy-line-list');
   if (!container) return;
-  var lines = loadData(STORAGE_KEYS.copies).filter(function (c) {
+  var lines = loadData(getStorageKeys().copies).filter(function (c) {
     return c.characterId === copySelectedCharId && c.type === 'line';
   });
 
@@ -3846,7 +4193,7 @@ function renderTagCloud() {
   var container = document.getElementById('copy-tag-cloud');
   if (!container) return;
 
-  var allTags = loadData(STORAGE_KEYS.copies).filter(function (c) {
+  var allTags = loadData(getStorageKeys().copies).filter(function (c) {
     return c.characterId === copySelectedCharId && c.type === 'tag';
   });
 
@@ -3895,12 +4242,12 @@ function renderCopyPreview() {
   var preview = document.getElementById('copy-preview');
   if (!preview) return;
 
-  var lines = loadData(STORAGE_KEYS.copies).filter(function (c) {
+  var lines = loadData(getStorageKeys().copies).filter(function (c) {
     return c.characterId === copySelectedCharId && c.type === 'line' && c.id === selectedLineId;
   });
   var selectedLine = lines.length > 0 ? lines[0].content : '';
 
-  var allTags = loadData(STORAGE_KEYS.copies).filter(function (c) {
+  var allTags = loadData(getStorageKeys().copies).filter(function (c) {
     return c.characterId === copySelectedCharId && c.type === 'tag';
   });
   // 按点击顺序拼接标签
@@ -3915,7 +4262,7 @@ function renderCopyPreview() {
     }
   }
 
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var ch = null;
   for (var j = 0; j < characters.length; j++) {
     if (characters[j].id === copySelectedCharId) { ch = characters[j]; break; }
@@ -4009,9 +4356,9 @@ function saveCopyItem() {
     createdAt: Date.now()
   };
 
-  var copies = loadData(STORAGE_KEYS.copies);
+  var copies = loadData(getStorageKeys().copies);
   copies.push(item);
-  saveData(STORAGE_KEYS.copies, copies);
+  saveData(getStorageKeys().copies, copies);
   document.getElementById('modal-copy-form').classList.remove('show');
   showToast(type === 'line' ? '台词已添加' : '标签已添加');
   renderCopyPage();
@@ -4019,8 +4366,8 @@ function saveCopyItem() {
 
 /** 删除文案条目 */
 function deleteCopyItem(id) {
-  var copies = loadData(STORAGE_KEYS.copies).filter(function (c) { return c.id !== id; });
-  saveData(STORAGE_KEYS.copies, copies);
+  var copies = loadData(getStorageKeys().copies).filter(function (c) { return c.id !== id; });
+  saveData(getStorageKeys().copies, copies);
   if (selectedLineId === id) selectedLineId = '';
   var idx = selectedTagIds.indexOf(id);
   if (idx >= 0) selectedTagIds.splice(idx, 1);
@@ -4032,9 +4379,10 @@ function deleteCopyItem(id) {
 /** 导出所有数据为 JSON 文件 */
 function exportAllData() {
   var data = {};
-  for (var key in STORAGE_KEYS) {
-    if (STORAGE_KEYS.hasOwnProperty(key)) {
-      data[STORAGE_KEYS[key]] = loadData(STORAGE_KEYS[key]);
+  var keys = getStorageKeys();
+  for (var key in keys) {
+    if (keys.hasOwnProperty(key)) {
+      data[keys[key]] = loadData(keys[key]);
     }
   }
   var json = JSON.stringify(data, null, 2);
@@ -4075,9 +4423,10 @@ function importData(file) {
 
 /** 重置所有数据 */
 function resetAllData() {
-  for (var key in STORAGE_KEYS) {
-    if (STORAGE_KEYS.hasOwnProperty(key)) {
-      saveData(STORAGE_KEYS[key], []);
+  var keys = getStorageKeys();
+  for (var key in keys) {
+    if (keys.hasOwnProperty(key)) {
+      saveData(keys[key], []);
     }
   }
   // 清空 IndexedDB
@@ -4110,14 +4459,14 @@ function renderOverview() {
   var container = document.getElementById('prep-overview');
   if (!container || !prepSelectedCharId) return;
 
-  var characters = loadData(STORAGE_KEYS.characters);
+  var characters = loadData(getStorageKeys().characters);
   var ch = null;
   for (var i = 0; i < characters.length; i++) {
     if (characters[i].id === prepSelectedCharId) { ch = characters[i]; break; }
   }
   if (!ch) return;
 
-  var items = loadData(STORAGE_KEYS.prepItems).filter(function (item) {
+  var items = loadData(getStorageKeys().prepItems).filter(function (item) {
     return item.characterId === prepSelectedCharId;
   });
 
@@ -4630,17 +4979,227 @@ function togglePrepView() {
       openConfirmDialog('确定要清空所有数据吗？', '所有角色、筹备项、照片、文案将被永久删除', resetAllData);
     });
   }
+
+  // 显示当前用户名
+  var currentUser = getCurrentUser();
+  var usernameEl = document.getElementById('setting-username-display');
+  if (usernameEl && currentUser) {
+    usernameEl.textContent = currentUser.username;
+  }
+
+  // 修改密码
+  var changePwBtn = document.getElementById('btn-change-password');
+  if (changePwBtn) {
+    changePwBtn.addEventListener('click', function () {
+      var oldPw = prompt('请输入当前密码');
+      if (oldPw === null) return;
+      if (!oldPw.trim()) { showToast('请输入当前密码'); return; }
+      var newPw = prompt('请输入新密码（至少4位）');
+      if (newPw === null) return;
+      if (!newPw || newPw.length < 4) { showToast('新密码至少需要4位'); return; }
+      changePassword(oldPw.trim(), newPw).then(function () {
+        showToast('密码已修改');
+      }).catch(function (err) {
+        showToast(err.message || '修改失败');
+      });
+    });
+  }
+
+  // 退出登录
+  var logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser);
+    });
+  }
+})();
+
+// ==================== 锁屏逻辑 ====================
+
+/** 当前选中的待登录用户 ID */
+var lockSelectedUserId = null;
+
+/** 显示锁屏，隐藏主应用 */
+function showLockScreen() {
+  document.getElementById('lock-screen').classList.remove('hidden');
+  document.getElementById('app').style.display = 'none';
+  renderLockScreen();
+}
+
+/** 隐藏锁屏，显示主应用 */
+function hideLockScreen() {
+  document.getElementById('lock-screen').classList.add('hidden');
+  document.getElementById('app').style.display = '';
+}
+
+/** 渲染锁屏内容 */
+function renderLockScreen() {
+  var users = getUsers();
+  var userList = document.getElementById('lock-user-list');
+  var loginForm = document.getElementById('lock-login-form');
+  var registerForm = document.getElementById('lock-register-form');
+  var bottomActions = document.getElementById('lock-bottom-actions');
+  var lockTitle = document.getElementById('lock-title');
+  var lockSubtitle = document.getElementById('lock-subtitle');
+
+  // 有旧数据需要迁移
+  if (hasLegacyData()) {
+    lockTitle.textContent = '欢迎回来';
+    lockSubtitle.textContent = '检测到旧版数据，请创建账号以迁移数据';
+  }
+
+  if (users.length === 0) {
+    // 无用户 → 直接显示注册
+    userList.style.display = 'none';
+    loginForm.style.display = 'none';
+    registerForm.style.display = '';
+    bottomActions.style.display = 'none';
+    lockSelectedUserId = null;
+    return;
+  }
+
+  // 有用户 → 显示用户列表
+  userList.style.display = '';
+  loginForm.style.display = 'none';
+  registerForm.style.display = 'none';
+  bottomActions.style.display = '';
+
+  var html = '';
+  for (var i = 0; i < users.length; i++) {
+    html += '<div class="lock-user-item" data-user-id="' + users[i].id + '">' +
+      '<span class="lock-user-emoji">🎭</span>' +
+      '<span class="lock-user-name">' + escapeHtml(users[i].username) + '</span>' +
+      '<span class="lock-user-arrow">▶</span>' +
+    '</div>';
+  }
+  userList.innerHTML = html;
+
+  // 绑定用户点击 → 显示登录表单
+  var items = userList.querySelectorAll('.lock-user-item');
+  for (var j = 0; j < items.length; j++) {
+    (function (item) {
+      item.addEventListener('click', function () {
+        lockSelectedUserId = item.getAttribute('data-user-id');
+        // 预填用户名显示
+        var u = null;
+        var all = getUsers();
+        for (var k = 0; k < all.length; k++) {
+          if (all[k].id === lockSelectedUserId) { u = all[k]; break; }
+        }
+        document.getElementById('lock-login-password').value = '';
+        document.getElementById('lock-login-password').placeholder = '请输入 ' + (u ? u.username : '') + ' 的密码';
+        document.getElementById('lock-login-error').textContent = '';
+        userList.style.display = 'none';
+        loginForm.style.display = '';
+        bottomActions.style.display = 'none';
+      });
+    })(items[j]);
+  }
+}
+
+/** 显示注册表单 */
+function showRegisterForm() {
+  var userList = document.getElementById('lock-user-list');
+  var loginForm = document.getElementById('lock-login-form');
+  var registerForm = document.getElementById('lock-register-form');
+  var bottomActions = document.getElementById('lock-bottom-actions');
+  userList.style.display = 'none';
+  loginForm.style.display = 'none';
+  registerForm.style.display = '';
+  bottomActions.style.display = 'none';
+  document.getElementById('lock-reg-username').value = '';
+  document.getElementById('lock-reg-password').value = '';
+  document.getElementById('lock-reg-password2').value = '';
+  document.getElementById('lock-reg-error').textContent = '';
+}
+
+/** 返回用户列表 */
+function showUserList() {
+  document.getElementById('lock-login-password').value = '';
+  document.getElementById('lock-login-error').textContent = '';
+  lockSelectedUserId = null;
+  renderLockScreen();
+}
+
+/** 执行登录 */
+function doLogin() {
+  if (!lockSelectedUserId) return;
+  var pw = document.getElementById('lock-login-password').value;
+  var errEl = document.getElementById('lock-login-error');
+  if (!pw) { errEl.textContent = '请输入密码'; return; }
+  loginUser(lockSelectedUserId, pw).then(function (user) {
+    if (hasLegacyData()) migrateLegacyData(user.id);
+    hideLockScreen();
+    renderDashboard();
+    showToast('欢迎回来，' + user.username);
+  }).catch(function (err) {
+    errEl.textContent = err.message || '登录失败';
+  });
+}
+
+/** 执行注册 */
+function doRegister() {
+  var username = document.getElementById('lock-reg-username').value;
+  var pw = document.getElementById('lock-reg-password').value;
+  var pw2 = document.getElementById('lock-reg-password2').value;
+  var errEl = document.getElementById('lock-reg-error');
+
+  if (!username.trim()) { errEl.textContent = '请输入用户名'; return; }
+  if (!pw) { errEl.textContent = '请设置密码'; return; }
+  if (pw !== pw2) { errEl.textContent = '两次密码不一致'; return; }
+
+  registerUser(username, pw).then(function (user) {
+    if (hasLegacyData()) migrateLegacyData(user.id);
+    hideLockScreen();
+    renderDashboard();
+    showToast('注册成功，欢迎！');
+  }).catch(function (err) {
+    errEl.textContent = err.message || '注册失败';
+  });
+}
+
+// 绑定锁屏事件
+(function initLockScreen() {
+  // 用户列表项点击 → renderLockScreen 中动态绑定
+
+  // 登录按钮
+  document.getElementById('lock-login-btn').addEventListener('click', doLogin);
+  // 回车登录
+  document.getElementById('lock-login-password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // 登录表单返回按钮
+  var loginBackBtn = document.getElementById('lock-login-back');
+  if (loginBackBtn) { loginBackBtn.addEventListener('click', showUserList); }
+
+  // 注册按钮
+  document.getElementById('lock-reg-btn').addEventListener('click', doRegister);
+
+  // 注册表单返回按钮
+  var regBackBtn = document.getElementById('lock-reg-back');
+  if (regBackBtn) { regBackBtn.addEventListener('click', renderLockScreen); }
+
+  // "创建新账号" 按钮
+  document.getElementById('lock-show-register').addEventListener('click', showRegisterForm);
 })();
 
 // ==================== 初始化 ====================
 
 (function init() {
-  renderDashboard();
-  console.log('CosPlan V2.0（明亮主题）初始化完成');
-  console.log('角色数:', loadData(STORAGE_KEYS.characters).length);
-  console.log('筹备项:', loadData(STORAGE_KEYS.prepItems).length);
-  console.log('照片数:', loadData(STORAGE_KEYS.photos).length);
-  console.log('文案数:', loadData(STORAGE_KEYS.copies).length);
+  var currentUser = getCurrentUser();
+  if (!currentUser) {
+    showLockScreen();
+    console.log('CosPlan V2.0 - 等待登录');
+  } else {
+    hideLockScreen();
+    renderDashboard();
+    console.log('CosPlan V2.0（明亮主题）当前用户:', currentUser.username);
+    console.log('角色数:', loadData(getStorageKeys().characters).length);
+    console.log('筹备项:', loadData(getStorageKeys().prepItems).length);
+    console.log('照片数:', loadData(getStorageKeys().photos).length);
+    console.log('文案数:', loadData(getStorageKeys().copies).length);
+  }
 })();
 </script>
 
