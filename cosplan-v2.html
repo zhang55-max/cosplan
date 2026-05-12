@@ -1767,6 +1767,21 @@
       color: var(--text-muted);
       font-size: var(--font-sm);
     }
+    .timeline-char-header {
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      margin: var(--space-md) 0 var(--space-sm) -2px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .timeline-char-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
 
     /* ========== 灵感记录 ========== */
     .inspiration-section {
@@ -2083,7 +2098,11 @@
     </div>
     <!-- 时间线 -->
     <div class="timeline-section">
-      <h3>📅 项目时间线</h3>
+      <h3>📅 项目时间线
+        <select id="timeline-filter" style="font-size:var(--font-sm);padding:2px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);margin-left:var(--space-sm);vertical-align:middle;outline:none;">
+          <option value="all">全部角色</option>
+        </select>
+      </h3>
       <div class="timeline" id="profile-timeline">
         <div class="timeline-empty">暂无记录</div>
       </div>
@@ -4870,25 +4889,71 @@ function renderProfilePage() {
 
 function renderProfileTimeline() {
   var container = document.getElementById('profile-timeline');
+  var filterEl = document.getElementById('timeline-filter');
   if (!container) return;
-  var timeline = getTimeline();
-  if (timeline.length === 0) {
+
+  // 读取全部时间线，按角色分组
+  var allTimeline = getTimeline();
+  var grouped = {}; // { charId: { name, events: [] } }
+  for (var i = 0; i < allTimeline.length; i++) {
+    var ev = allTimeline[i];
+    if (!grouped[ev.characterId]) {
+      grouped[ev.characterId] = { name: ev.characterName, events: [] };
+    }
+    grouped[ev.characterId].events.push(ev);
+  }
+
+  // 获取角色列表用于筛选下拉
+  var characters = loadData(getStorageKeys().characters);
+  var charIds = Object.keys(grouped);
+
+  // 填充筛选下拉
+  if (filterEl) {
+    var selectedVal = filterEl.value;
+    var opts = '<option value="all">全部角色（' + charIds.length + '）</option>';
+    for (var j = 0; j < characters.length; j++) {
+      var ch = characters[j];
+      if (grouped[ch.id]) {
+        var sel = (selectedVal === ch.id) ? ' selected' : '';
+        opts += '<option value="' + ch.id + '"' + sel + '>' + escapeHtml(ch.name) + '</option>';
+      }
+    }
+    filterEl.innerHTML = opts;
+  }
+
+  // 筛选
+  var filterId = filterEl ? filterEl.value : 'all';
+
+  if (charIds.length === 0) {
     container.innerHTML = '<div class="timeline-empty">📭 暂无记录<br><span style="font-size:11px;">创建角色并更新状态后，时间线将自动生成</span></div>';
     return;
   }
+
   var html = '';
-  for (var i = 0; i < timeline.length; i++) {
-    var e = timeline[i];
-    var timeStr = formatRelativeTime(e.timestamp);
-    html += '<div class="timeline-item">' +
-      '<div class="timeline-dot ' + e.type + '"></div>' +
-      '<div class="timeline-card">' +
-        '<div class="tl-title">' + escapeHtml(e.characterName) + '</div>' +
-        '<div class="tl-detail">' + escapeHtml(e.detail) + '</div>' +
-        '<div class="tl-time">' + timeStr + '</div>' +
-      '</div>' +
+
+  for (var c = 0; c < charIds.length; c++) {
+    var cid = charIds[c];
+    var grp = grouped[cid];
+    if (filterId !== 'all' && filterId !== cid) continue;
+
+    html += '<div class="timeline-char-header">' +
+      '<span class="timeline-char-dot"></span>' +
+      escapeHtml(grp.name) +
+      '<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">' + grp.events.length + ' 条记录</span>' +
     '</div>';
+    for (var k = 0; k < grp.events.length; k++) {
+      var e = grp.events[k];
+      var timeStr = formatRelativeTime(e.timestamp);
+      html += '<div class="timeline-item">' +
+        '<div class="timeline-dot ' + e.type + '"></div>' +
+        '<div class="timeline-card">' +
+          '<div class="tl-detail">' + escapeHtml(e.detail) + '</div>' +
+          '<div class="tl-time">' + timeStr + '</div>' +
+        '</div>' +
+      '</div>';
+    }
   }
+
   container.innerHTML = html;
 }
 
@@ -5572,6 +5637,14 @@ function togglePrepView() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
       openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser);
+    });
+  }
+
+  // 时间线筛选
+  var filterEl = document.getElementById('timeline-filter');
+  if (filterEl) {
+    filterEl.addEventListener('change', function () {
+      renderProfileTimeline();
     });
   }
 })();
