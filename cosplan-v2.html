@@ -2236,6 +2236,10 @@
         <span style="font-size:var(--font-sm);color:var(--text-muted);">退出当前账号</span>
         <button class="btn btn-danger" id="btn-logout-profile" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🚪 退出</button>
       </div>
+      <div class="setting-item" style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
+        <span style="font-size:var(--font-sm);color:var(--danger);">注销账号（不可恢复）</span>
+        <button class="btn btn-danger" id="btn-delete-account" style="flex:none;padding:6px 16px;font-size:var(--font-sm);background:var(--danger);color:#fff;">注销</button>
+      </div>
     </div>
     <input type="file" accept="image/*" id="profile-avatar-input" style="display:none;">
   </main>
@@ -2706,6 +2710,29 @@ function loginUser(userId, password) {
 function logoutUser() {
   localStorage.removeItem(SESSION_KEY);
   location.reload();
+}
+
+/** 注销当前账号，删除所有数据 */
+function deleteAccount() {
+  var current = getCurrentUser();
+  if (!current) return;
+  // 清除该用户的所有 localStorage 数据
+  var userId = current.id;
+  var keysToRemove = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k.indexOf('cosplan_' + userId + '_') === 0 || k === 'cosplan_session') {
+      keysToRemove.push(k);
+    }
+  }
+  for (var j = 0; j < keysToRemove.length; j++) {
+    localStorage.removeItem(keysToRemove[j]);
+  }
+  // 从用户表中移除
+  var users = getUsers().filter(function (u) { return u.id !== userId; });
+  saveUsers(users);
+  showToast('账号已注销');
+  setTimeout(function () { location.reload(); }, 800);
 }
 
 /** 修改密码 */
@@ -5979,6 +6006,14 @@ function togglePrepView() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
       openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser, '确认退出');
+    });
+  }
+
+  // 注销账号
+  var deleteBtn = document.getElementById('btn-delete-account');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function () {
+      openConfirmDialog('确定要注销账号吗？', '所有角色、筹备项、照片、文案、时间线将被永久删除，不可恢复！', deleteAccount, '确认注销');
     });
   }
 
