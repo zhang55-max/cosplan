@@ -1752,6 +1752,7 @@
     }
     .timeline-dot.created { background: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
     .timeline-dot.status_change { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+    .timeline-dot.prep_added { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
     .timeline-card {
       background: var(--card);
       border-radius: var(--radius);
@@ -3992,6 +3993,17 @@ function savePrepItem() {
     showToast('筹备项已更新');
   } else {
     items.push(item);
+    // 记录时间线：获取角色名称和分类名称
+    var catLabel = item.category;
+    for (var c = 0; c < PREP_CATEGORIES.length; c++) {
+      if (PREP_CATEGORIES[c].key === item.category) { catLabel = PREP_CATEGORIES[c].emoji + ' ' + PREP_CATEGORIES[c].label; break; }
+    }
+    var characters = loadData(getStorageKeys().characters);
+    var chName = '';
+    for (var ch = 0; ch < characters.length; ch++) {
+      if (characters[ch].id === charId) { chName = characters[ch].name; break; }
+    }
+    addTimelineEvent(charId, chName || '未知角色', 'prep_added', '添加了' + catLabel + '：' + titleVal);
     showToast('筹备项已添加');
   }
 
