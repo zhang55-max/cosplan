@@ -2462,7 +2462,7 @@
       </div>
       <div class="btn-group">
         <button class="btn btn-primary" id="btn-save-photo-note">💾 保存备注</button>
-        <button class="btn btn-secondary" id="btn-download-photo">📥 下载原图</button>
+        <button class="btn btn-secondary" id="btn-download-photo">📥 保存到相册</button>
         <button class="btn btn-danger" id="btn-delete-photo">🗑️ 删除照片</button>
       </div>
     </div>
@@ -4696,7 +4696,7 @@ function deletePhoto() {
   renderDashboard();
 }
 
-/** 下载照片原图 */
+/** 保存照片到相册（全屏展示，长按保存） */
 function downloadPhoto() {
   if (!detailPhotoId) return;
   var photo = null;
@@ -4705,36 +4705,29 @@ function downloadPhoto() {
     if (photos[i].id === detailPhotoId) { photo = photos[i]; break; }
   }
   if (!photo) return;
-  // 尝试从 IndexedDB 取原图
+
+  // 获取最佳画质：IDB 原图 > localStorage 压缩版
+  var showImage = function (src) {
+    var overlay = document.createElement('div');
+    overlay.id = 'photo-save-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    overlay.innerHTML =
+      '<img src="' + src + '" style="max-width:100%;max-height:85vh;object-fit:contain;-webkit-touch-callout:default;" id="photo-save-img">' +
+      '<div style="position:absolute;bottom:40px;left:0;right:0;text-align:center;color:#fff;font-size:14px;padding:12px;background:rgba(0,0,0,0.6);margin:0 20px;border-radius:12px;">长按图片 → 选择「保存图片」即可存入相册</div>' +
+      '<button style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;border:none;font-size:20px;cursor:pointer;" onclick="document.getElementById(\'photo-save-overlay\').remove();">✕</button>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+  };
+
   openIDB().then(function (db) {
     var tx = db.transaction('files', 'readonly');
     var req = tx.objectStore('files').get('photo_orig_' + detailPhotoId);
     req.onsuccess = function () {
       db.close();
-      if (req.result && req.result.data) {
-        triggerDownload(req.result.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
-      } else {
-        // 无原图回退：下载 localStorage 中的版本
-        triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
-      }
+      showImage(req.result && req.result.data ? req.result.data : photo.data);
     };
-    req.onerror = function () {
-      db.close();
-      triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
-    };
-  }).catch(function () {
-    triggerDownload(photo.data, 'cosplan-photo-' + detailPhotoId + '.jpg');
-  });
-}
-
-function triggerDownload(dataUrl, filename) {
-  var a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showToast('下载中...');
+    req.onerror = function () { db.close(); showImage(photo.data); };
+  }).catch(function () { showImage(photo.data); });
 }
 
 /** 上传照片处理 */
