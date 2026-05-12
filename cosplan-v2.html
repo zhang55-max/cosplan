@@ -1624,6 +1624,17 @@
       min-height: 18px;
     }
 
+    .lock-link-row {
+      text-align: center;
+      margin-top: var(--space-md);
+    }
+    .lock-link {
+      color: var(--primary);
+      font-size: var(--font-sm);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     .lock-divider {
       display: flex;
       align-items: center;
@@ -1929,18 +1940,25 @@
     <div id="lock-title" class="lock-title">CosPlan</div>
     <div id="lock-subtitle" class="lock-subtitle">COSER 创作助手</div>
 
-    <!-- 用户列表（已有用户时显示） -->
+    <!-- 用户列表（已有用户时隐藏，改用登录表单内的选择器） -->
     <div id="lock-user-list" class="lock-user-list" style="display:none;"></div>
 
-    <!-- 登录表单（选择用户后显示） -->
+    <!-- 登录表单 -->
     <div id="lock-login-form" style="display:none;">
+      <div class="lock-input-group">
+        <label>账号</label>
+        <select id="lock-user-select" class="lock-input" style="appearance:auto;-webkit-appearance:auto;">
+        </select>
+      </div>
       <div class="lock-input-group">
         <label>密码</label>
         <input id="lock-login-password" class="lock-input" type="password" placeholder="请输入密码" autocomplete="current-password">
       </div>
       <button id="lock-login-btn" class="lock-btn primary">登 录</button>
-      <button id="lock-login-back" class="lock-btn secondary">◀ 切换账号</button>
       <div id="lock-login-error" class="lock-error"></div>
+      <div class="lock-link-row">
+        <span class="lock-link" id="lock-go-register">如为新用户请注册</span>
+      </div>
     </div>
 
     <!-- 注册表单 -->
@@ -1958,13 +1976,10 @@
         <input id="lock-reg-password2" class="lock-input" type="password" placeholder="再次输入密码" autocomplete="new-password">
       </div>
       <button id="lock-reg-btn" class="lock-btn primary">注 册</button>
-      <button id="lock-reg-back" class="lock-btn secondary">◀ 返回</button>
       <div id="lock-reg-error" class="lock-error"></div>
-    </div>
-
-    <!-- 底部操作 -->
-    <div id="lock-bottom-actions" style="margin-top: var(--space-md);">
-      <button id="lock-show-register" class="lock-btn secondary">创建新账号</button>
+      <div class="lock-link-row">
+        <span class="lock-link" id="lock-go-login">已有账号？返回登录</span>
+      </div>
     </div>
   </div>
 </div>
@@ -5795,9 +5810,10 @@ function renderLockScreen() {
   var userList = document.getElementById('lock-user-list');
   var loginForm = document.getElementById('lock-login-form');
   var registerForm = document.getElementById('lock-register-form');
-  var bottomActions = document.getElementById('lock-bottom-actions');
   var lockTitle = document.getElementById('lock-title');
   var lockSubtitle = document.getElementById('lock-subtitle');
+
+  userList.style.display = 'none';
 
   // 有旧数据需要迁移
   if (hasLegacyData()) {
@@ -5807,84 +5823,59 @@ function renderLockScreen() {
 
   if (users.length === 0) {
     // 无用户 → 直接显示注册
-    userList.style.display = 'none';
     loginForm.style.display = 'none';
     registerForm.style.display = '';
-    bottomActions.style.display = 'none';
     lockSelectedUserId = null;
     return;
   }
 
-  // 有用户 → 显示用户列表
-  userList.style.display = '';
-  loginForm.style.display = 'none';
+  // 有用户 → 默认显示登录表单
+  loginForm.style.display = '';
   registerForm.style.display = 'none';
-  bottomActions.style.display = '';
 
-  var html = '';
-  for (var i = 0; i < users.length; i++) {
-    html += '<div class="lock-user-item" data-user-id="' + users[i].id + '">' +
-      '<span class="lock-user-emoji">🎭</span>' +
-      '<span class="lock-user-name">' + escapeHtml(users[i].username) + '</span>' +
-      '<span class="lock-user-arrow">▶</span>' +
-    '</div>';
+  // 填充用户下拉选择器
+  var selectEl = document.getElementById('lock-user-select');
+  if (selectEl) {
+    var selHtml = '';
+    for (var i = 0; i < users.length; i++) {
+      selHtml += '<option value="' + users[i].id + '">' + escapeHtml(users[i].username) + '</option>';
+    }
+    selectEl.innerHTML = selHtml;
+    lockSelectedUserId = users[0].id;
+    selectEl.value = lockSelectedUserId;
   }
-  userList.innerHTML = html;
 
-  // 绑定用户点击 → 显示登录表单
-  var items = userList.querySelectorAll('.lock-user-item');
-  for (var j = 0; j < items.length; j++) {
-    (function (item) {
-      item.addEventListener('click', function () {
-        lockSelectedUserId = item.getAttribute('data-user-id');
-        // 预填用户名显示
-        var u = null;
-        var all = getUsers();
-        for (var k = 0; k < all.length; k++) {
-          if (all[k].id === lockSelectedUserId) { u = all[k]; break; }
-        }
-        document.getElementById('lock-login-password').value = '';
-        document.getElementById('lock-login-password').placeholder = '请输入 ' + (u ? u.username : '') + ' 的密码';
-        document.getElementById('lock-login-error').textContent = '';
-        userList.style.display = 'none';
-        loginForm.style.display = '';
-        bottomActions.style.display = 'none';
-      });
-    })(items[j]);
-  }
+  document.getElementById('lock-login-password').value = '';
+  document.getElementById('lock-login-error').textContent = '';
 }
 
 /** 显示注册表单 */
 function showRegisterForm() {
-  var userList = document.getElementById('lock-user-list');
-  var loginForm = document.getElementById('lock-login-form');
-  var registerForm = document.getElementById('lock-register-form');
-  var bottomActions = document.getElementById('lock-bottom-actions');
-  userList.style.display = 'none';
-  loginForm.style.display = 'none';
-  registerForm.style.display = '';
-  bottomActions.style.display = 'none';
+  document.getElementById('lock-login-form').style.display = 'none';
+  document.getElementById('lock-register-form').style.display = '';
   document.getElementById('lock-reg-username').value = '';
   document.getElementById('lock-reg-password').value = '';
   document.getElementById('lock-reg-password2').value = '';
   document.getElementById('lock-reg-error').textContent = '';
 }
 
-/** 返回用户列表 */
-function showUserList() {
+/** 返回登录表单 */
+function showLoginForm() {
+  document.getElementById('lock-register-form').style.display = 'none';
+  document.getElementById('lock-login-form').style.display = '';
   document.getElementById('lock-login-password').value = '';
   document.getElementById('lock-login-error').textContent = '';
-  lockSelectedUserId = null;
-  renderLockScreen();
 }
 
 /** 执行登录 */
 function doLogin() {
-  if (!lockSelectedUserId) return;
+  var selectEl = document.getElementById('lock-user-select');
+  var userId = selectEl ? selectEl.value : lockSelectedUserId;
+  if (!userId) return;
   var pw = document.getElementById('lock-login-password').value;
   var errEl = document.getElementById('lock-login-error');
   if (!pw) { errEl.textContent = '请输入密码'; return; }
-  loginUser(lockSelectedUserId, pw).then(function (user) {
+  loginUser(userId, pw).then(function (user) {
     if (hasLegacyData()) migrateLegacyData(user.id);
     hideLockScreen();
     renderDashboard();
@@ -5917,8 +5908,6 @@ function doRegister() {
 
 // 绑定锁屏事件
 (function initLockScreen() {
-  // 用户列表项点击 → renderLockScreen 中动态绑定
-
   // 登录按钮
   document.getElementById('lock-login-btn').addEventListener('click', doLogin);
   // 回车登录
@@ -5926,19 +5915,24 @@ function doRegister() {
     if (e.key === 'Enter') doLogin();
   });
 
-  // 登录表单返回按钮
-  var loginBackBtn = document.getElementById('lock-login-back');
-  if (loginBackBtn) { loginBackBtn.addEventListener('click', showUserList); }
+  // 用户下拉切换
+  var userSelect = document.getElementById('lock-user-select');
+  if (userSelect) {
+    userSelect.addEventListener('change', function () {
+      lockSelectedUserId = userSelect.value;
+    });
+  }
 
   // 注册按钮
   document.getElementById('lock-reg-btn').addEventListener('click', doRegister);
 
-  // 注册表单返回按钮
-  var regBackBtn = document.getElementById('lock-reg-back');
-  if (regBackBtn) { regBackBtn.addEventListener('click', renderLockScreen); }
+  // "如为新用户请注册" 链接
+  var goReg = document.getElementById('lock-go-register');
+  if (goReg) { goReg.addEventListener('click', showRegisterForm); }
 
-  // "创建新账号" 按钮
-  document.getElementById('lock-show-register').addEventListener('click', showRegisterForm);
+  // "已有账号？返回登录" 链接
+  var goLogin = document.getElementById('lock-go-login');
+  if (goLogin) { goLogin.addEventListener('click', showLoginForm); }
 })();
 
 // ==================== 初始化 ====================
