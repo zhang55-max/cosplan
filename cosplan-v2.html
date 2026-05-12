@@ -2407,6 +2407,7 @@
             <option value="prop">🔧 道具</option>
             <option value="location">📍 场地</option>
             <option value="storyboard">🎬 分镜</option>
+            <option value="script">📜 脚本</option>
           </select>
         </div>
         <div class="form-group">
@@ -3738,8 +3739,8 @@ function showCharacterDetail(charId) {
 
   // 筹备清单明细
   var prepDetailHtml = '';
-  var catOrder = ['costume', 'prop', 'location', 'storyboard'];
-  var catNames = { costume: '👗服装', prop: '🔧道具', location: '📍场地', storyboard: '🎬分镜' };
+  var catOrder = ['costume', 'prop', 'location', 'storyboard', 'script'];
+  var catNames = { costume: '👗服装', prop: '🔧道具', location: '📍场地', storyboard: '🎬分镜', script: '📜脚本' };
   for (var cIdx = 0; cIdx < catOrder.length; cIdx++) {
     var catKey = catOrder[cIdx];
     var catItems = prepItems.filter(function (p) { return p.category === catKey; });
@@ -3911,7 +3912,8 @@ var PREP_CATEGORIES = [
   { key: 'costume',    emoji: '👗', label: '服装' },
   { key: 'prop',       emoji: '🔧', label: '道具' },
   { key: 'location',   emoji: '📍', label: '场地' },
-  { key: 'storyboard', emoji: '🎬', label: '分镜' }
+  { key: 'storyboard', emoji: '🎬', label: '分镜' },
+  { key: 'script',     emoji: '📜', label: '脚本' }
 ];
 
 /** 当前筹备页选中的角色 ID */
