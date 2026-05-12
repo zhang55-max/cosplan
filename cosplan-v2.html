@@ -1638,6 +1638,211 @@
       height: 1px;
       background: var(--border);
     }
+    /* ========== "我的"个人主页 ========== */
+    .profile-header {
+      text-align: center;
+      padding: var(--space-lg) 0;
+    }
+    .profile-avatar-wrap {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar-camera {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--gradient);
+      color: var(--text-on-accent);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .profile-nickname {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      color: var(--text);
+      margin-top: var(--space-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .profile-nickname .edit-icon { font-size: 14px; opacity: 0.4; }
+    .profile-stats-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-lg);
+      margin-top: var(--space-sm);
+    }
+    .profile-stat {
+      text-align: center;
+    }
+    .profile-stat .ps-num {
+      font-size: var(--font-xxl);
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .profile-stat .ps-label {
+      font-size: var(--font-sm);
+      color: var(--text-muted);
+    }
+
+    /* ========== 时间线 ========== */
+    .timeline-section { margin-top: var(--space-lg); }
+    .timeline-section h3 {
+      font-size: var(--font-lg);
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+    }
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--border);
+      border-radius: 1px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: var(--space-md);
+      padding-left: var(--space-sm);
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -20px; top: 4px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .timeline-dot.created { background: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+    .timeline-dot.status_change { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+    .timeline-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: var(--space-sm) var(--space-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .timeline-card .tl-title {
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+    }
+    .timeline-card .tl-detail {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+    .timeline-card .tl-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .timeline-empty {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--text-muted);
+      font-size: var(--font-sm);
+    }
+
+    /* ========== 灵感记录 ========== */
+    .inspiration-section {
+      margin-bottom: var(--space-md);
+    }
+    .inspiration-input-wrap {
+      display: flex;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-sm);
+    }
+    .inspiration-input {
+      flex: 1;
+      padding: var(--space-sm);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      font-size: var(--font-base);
+      background: var(--card);
+      color: var(--text);
+      min-height: 44px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .inspiration-input:focus { border-color: var(--primary); }
+    .inspiration-input::placeholder { color: var(--text-muted); }
+    .inspiration-send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--gradient);
+      color: var(--text-on-accent);
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+    .inspiration-send-btn:active { opacity: 0.8; transform: scale(0.9); }
+    .inspiration-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .inspiration-item {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: var(--space-sm) var(--space-md);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .inspiration-item:active { background: var(--card-hover); }
+    .inspiration-item .ins-content {
+      font-size: var(--font-base);
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .inspiration-item.expanded .ins-content {
+      display: block;
+      -webkit-line-clamp: unset;
+    }
+    .inspiration-item .ins-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .inspiration-show-more {
+      text-align: center;
+      padding: var(--space-xs);
+      color: var(--primary);
+      font-size: var(--font-sm);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1700,6 +1905,15 @@
     <div class="stats-grid" id="dashboard-stats"></div>
     <!-- 快捷操作 -->
     <div class="quick-actions" id="dashboard-actions"></div>
+    <!-- 灵感快速记录 -->
+    <div class="inspiration-section">
+      <div class="section-title">💡 灵感速记</div>
+      <div class="inspiration-input-wrap">
+        <input class="inspiration-input" id="inspiration-input" type="text" placeholder="突然想到什么..." maxlength="500" autocomplete="off">
+        <button class="inspiration-send-btn" id="inspiration-send-btn">➤</button>
+      </div>
+      <div class="inspiration-list" id="inspiration-list"></div>
+    </div>
     <!-- 项目列表 -->
     <div class="section-title">📁 我的角色项目 <span class="count" id="project-count"></span></div>
     <div id="project-list-container">
@@ -1822,20 +2036,6 @@
       </div>
     </div>
     <!-- 设置区：账户管理 -->
-    <div class="settings-section" id="settings-account-section">
-      <h3>👤 账户管理</h3>
-      <div class="setting-item" id="setting-current-user">
-        <span style="font-size:var(--font-sm);color:var(--text-secondary);">当前账号：<strong id="setting-username-display"></strong></span>
-      </div>
-      <div class="setting-item">
-        <span style="font-size:var(--font-sm);color:var(--text-secondary);">修改密码</span>
-        <button class="btn btn-secondary" id="btn-change-password" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🔒 修改</button>
-      </div>
-      <div class="setting-item">
-        <span style="font-size:var(--font-sm);color:var(--text-muted);">退出当前账号</span>
-        <button class="btn btn-danger" id="btn-logout" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🚪 退出</button>
-      </div>
-    </div>
     <!-- 设置区：数据导出/导入 -->
     <div class="settings-section">
       <h3>⚙️ 数据管理</h3>
@@ -1853,6 +2053,54 @@
       </div>
       <input type="file" accept=".json" id="import-file-input" style="display:none;">
     </div>
+  </main>
+
+  <!-- ====== 视图 6：我的 ====== -->
+  <main id="view-profile" class="view">
+    <div class="profile-header">
+      <div class="profile-avatar-wrap" id="profile-avatar-wrap">
+        <div class="profile-avatar" id="profile-avatar">🎭</div>
+        <div class="profile-avatar-camera">📷</div>
+      </div>
+      <div class="profile-nickname" id="profile-nickname">
+        <span id="profile-nickname-text"></span>
+        <span class="edit-icon">✏️</span>
+      </div>
+      <div class="profile-stats-row">
+        <div class="profile-stat">
+          <div class="ps-num" id="ps-total">0</div>
+          <div class="ps-label">角色项目</div>
+        </div>
+        <div class="profile-stat">
+          <div class="ps-num" id="ps-active">0</div>
+          <div class="ps-label">进行中</div>
+        </div>
+        <div class="profile-stat">
+          <div class="ps-num" id="ps-done">0</div>
+          <div class="ps-label">已完成</div>
+        </div>
+      </div>
+    </div>
+    <!-- 时间线 -->
+    <div class="timeline-section">
+      <h3>📅 项目时间线</h3>
+      <div class="timeline" id="profile-timeline">
+        <div class="timeline-empty">暂无记录</div>
+      </div>
+    </div>
+    <!-- 账户操作 -->
+    <div class="settings-section" style="margin-top:var(--space-lg);">
+      <h3>🔒 账户安全</h3>
+      <div class="setting-item">
+        <span style="font-size:var(--font-sm);color:var(--text-secondary);">修改密码</span>
+        <button class="btn btn-secondary" id="btn-change-password-profile" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🔒 修改</button>
+      </div>
+      <div class="setting-item">
+        <span style="font-size:var(--font-sm);color:var(--text-muted);">退出当前账号</span>
+        <button class="btn btn-danger" id="btn-logout-profile" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🚪 退出</button>
+      </div>
+    </div>
+    <input type="file" accept="image/*" id="profile-avatar-input" style="display:none;">
   </main>
 
   <!-- ====== 文案添加弹窗 ====== -->
@@ -1907,6 +2155,10 @@
     <button class="nav-item" data-view="copy">
       <span class="nav-emoji">✍️</span>
       <span class="nav-label">文案</span>
+    </button>
+    <button class="nav-item" data-view="profile">
+      <span class="nav-emoji">👤</span>
+      <span class="nav-label">我的</span>
     </button>
   </nav>
 
@@ -2262,7 +2514,13 @@ function getCurrentUser() {
     if (!session || !session.userId) return null;
     var users = getUsers();
     for (var i = 0; i < users.length; i++) {
-      if (users[i].id === session.userId) return users[i];
+      if (users[i].id === session.userId) {
+        var u = users[i];
+        // 兼容旧用户数据
+        if (!u.nickname) u.nickname = u.username;
+        if (u.avatar === undefined) u.avatar = '';
+        return u;
+      }
     }
   } catch (e) { return null; }
   return null;
@@ -2284,6 +2542,8 @@ function registerUser(username, password) {
       var user = {
         id: genId(),
         username: trimmed,
+        nickname: trimmed,
+        avatar: '',
         passwordHash: hash,
         salt: salt,
         createdAt: Date.now()
@@ -2342,6 +2602,102 @@ function changePassword(oldPassword, newPassword) {
       });
     });
   });
+}
+
+/** 更新当前用户资料（avatar, nickname 等） */
+function updateUserProfile(updates) {
+  var current = getCurrentUser();
+  if (!current) return;
+  var users = getUsers();
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].id === current.id) {
+      if (updates.nickname !== undefined) users[i].nickname = updates.nickname;
+      if (updates.avatar !== undefined) users[i].avatar = updates.avatar;
+      break;
+    }
+  }
+  saveUsers(users);
+}
+
+// ==================== 时间线 ====================
+
+/** 添加时间线事件 */
+function addTimelineEvent(characterId, characterName, type, detail) {
+  var current = getCurrentUser();
+  if (!current) return;
+  var key = 'cosplan_' + current.id + '_timeline';
+  var timeline = [];
+  try { timeline = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+  timeline.push({
+    id: genId(),
+    characterId: characterId,
+    characterName: characterName,
+    type: type,
+    detail: detail,
+    timestamp: Date.now()
+  });
+  localStorage.setItem(key, JSON.stringify(timeline));
+}
+
+/** 读取当前用户时间线（按时间倒序） */
+function getTimeline(charId) {
+  var current = getCurrentUser();
+  if (!current) return [];
+  var key = 'cosplan_' + current.id + '_timeline';
+  var timeline = [];
+  try { timeline = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+  if (charId) {
+    timeline = timeline.filter(function (e) { return e.characterId === charId; });
+  }
+  timeline.sort(function (a, b) { return b.timestamp - a.timestamp; });
+  return timeline;
+}
+
+/** 清理指定角色的时间线 */
+function clearTimelineForChar(charId) {
+  var current = getCurrentUser();
+  if (!current) return;
+  var key = 'cosplan_' + current.id + '_timeline';
+  var timeline = [];
+  try { timeline = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+  timeline = timeline.filter(function (e) { return e.characterId !== charId; });
+  localStorage.setItem(key, JSON.stringify(timeline));
+}
+
+// ==================== 灵感 ====================
+
+/** 添加灵感 */
+function addInspiration(content) {
+  var current = getCurrentUser();
+  if (!current) return;
+  content = content.trim();
+  if (!content) return;
+  var keys = getStorageKeys();
+  var key = 'cosplan_' + current.id + '_inspirations';
+  var list = [];
+  try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+  list.unshift({ id: genId(), content: content, createdAt: Date.now() });
+  // 最多保留 200 条
+  if (list.length > 200) list = list.slice(0, 200);
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+/** 获取灵感列表 */
+function getInspirations() {
+  var current = getCurrentUser();
+  if (!current) return [];
+  var key = 'cosplan_' + current.id + '_inspirations';
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; }
+}
+
+/** 删除灵感 */
+function deleteInspiration(id) {
+  var current = getCurrentUser();
+  if (!current) return;
+  var key = 'cosplan_' + current.id + '_inspirations';
+  var list = getInspirations();
+  list = list.filter(function (item) { return item.id !== id; });
+  localStorage.setItem(key, JSON.stringify(list));
 }
 
 /** 检查是否存在旧版全局数据（无 userId 前缀） */
@@ -2446,6 +2802,94 @@ var STATUS_MAP = {
   done:      { label: '已完成', css: 'status-done' }
 };
 
+// ==================== 灵感渲染 ====================
+
+/** 相对时间格式化 */
+function formatRelativeTime(ts) {
+  var diff = Date.now() - ts;
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+  var d = new Date(ts);
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0') + ' ' +
+    String(d.getHours()).padStart(2, '0') + ':' +
+    String(d.getMinutes()).padStart(2, '0');
+}
+
+/** 渲染灵感列表 */
+function renderInspirations() {
+  var container = document.getElementById('inspiration-list');
+  if (!container) return;
+  var list = getInspirations();
+  if (list.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--font-sm);text-align:center;padding:8px;">暂无灵感，上方输入框快速记录</div>';
+    return;
+  }
+  // 只显示最近 5 条
+  var showAll = container.getAttribute('data-show-all') === 'true';
+  var display = showAll ? list : list.slice(0, 5);
+  var html = '';
+  for (var i = 0; i < display.length; i++) {
+    html += '<div class="inspiration-item" data-ins-id="' + display[i].id + '">' +
+      '<div class="ins-content">' + escapeHtml(display[i].content) + '</div>' +
+      '<div class="ins-time">' + formatRelativeTime(display[i].createdAt) + '</div>' +
+    '</div>';
+  }
+  if (!showAll && list.length > 5) {
+    html += '<div class="inspiration-show-more" id="inspiration-show-more">查看全部 ' + list.length + ' 条灵感</div>';
+  }
+  container.innerHTML = html;
+  container.setAttribute('data-show-all', showAll ? 'true' : 'false');
+
+  // 展开/收起
+  var items = container.querySelectorAll('.inspiration-item');
+  for (var j = 0; j < items.length; j++) {
+    items[j].addEventListener('click', function () {
+      this.classList.toggle('expanded');
+    });
+  }
+  // 长按删除
+  for (var k = 0; k < items.length; k++) {
+    (function (item) {
+      var timer;
+      item.addEventListener('touchstart', function () {
+        timer = setTimeout(function () {
+          var id = item.getAttribute('data-ins-id');
+          if (confirm('确定要删除这条灵感吗？')) {
+            deleteInspiration(id);
+            renderInspirations();
+            showToast('已删除');
+          }
+        }, 600);
+      });
+      item.addEventListener('touchend', function () { clearTimeout(timer); });
+      item.addEventListener('touchmove', function () { clearTimeout(timer); });
+    })(items[k]);
+  }
+  // 查看全部
+  var moreBtn = container.querySelector('#inspiration-show-more');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', function () {
+      container.setAttribute('data-show-all', 'true');
+      renderInspirations();
+    });
+  }
+}
+
+/** 发送灵感 */
+function sendInspiration() {
+  var input = document.getElementById('inspiration-input');
+  if (!input) return;
+  var content = input.value.trim();
+  if (!content) return;
+  addInspiration(content);
+  input.value = '';
+  renderInspirations();
+  showToast('灵感已记录 💡');
+}
+
 // ==================== 视图切换 ====================
 
 /** 当前显示的视图名称 */
@@ -2486,6 +2930,8 @@ function switchView(viewName) {
     renderPhotoPage();
   } else if (viewName === 'copy') {
     renderCopyPage();
+  } else if (viewName === 'profile') {
+    renderProfilePage();
   }
 }
 
@@ -2510,6 +2956,7 @@ function renderDashboard() {
 
   renderStats(stats);
   renderQuickActions();
+  renderInspirations();
   renderProjectList(characters);
 }
 
@@ -2814,6 +3261,7 @@ function saveCharacter() {
   } else {
     // 新建
     characters.push(character);
+    addTimelineEvent(character.id, character.name, 'created', '创建了角色项目');
     showToast('角色创建成功');
   }
 
@@ -2844,6 +3292,7 @@ function deleteCharacter(charId) {
   });
 
   characters = characters.filter(function (c) { return c.id !== charId; });
+  clearTimelineForChar(charId);
 
   saveData(getStorageKeys().characters, characters);
   saveData(getStorageKeys().prepItems, prepItems);
@@ -3093,9 +3542,11 @@ function hideCharacterDetail() {
 function cycleCharacterStatus(charId) {
   var order = ['prep', 'shooting', 'selecting', 'editing', 'done'];
   var characters = loadData(getStorageKeys().characters);
-  var newStatus = '';
+  var newStatus = '', oldStatus = '', chName = '';
   for (var i = 0; i < characters.length; i++) {
     if (characters[i].id === charId) {
+      oldStatus = characters[i].status;
+      chName = characters[i].name;
       var curIdx = order.indexOf(characters[i].status);
       if (curIdx < 0) curIdx = 0;
       var nextIdx = (curIdx + 1) % order.length;
@@ -3105,8 +3556,10 @@ function cycleCharacterStatus(charId) {
     }
   }
   saveData(getStorageKeys().characters, characters);
-  var label = (STATUS_MAP[newStatus] || STATUS_MAP.prep).label;
-  showToast('状态已切换：' + label);
+  var oldLabel = (STATUS_MAP[oldStatus] || {}).label || '未知';
+  var newLabel = (STATUS_MAP[newStatus] || STATUS_MAP.prep).label;
+  addTimelineEvent(charId, chName, 'status_change', oldLabel + ' → ' + newLabel);
+  showToast('状态已切换：' + newLabel);
 }
 
 // ==================== 筹备清单 ====================
@@ -4374,6 +4827,71 @@ function deleteCopyItem(id) {
   renderCopyPage();
 }
 
+// ==================== "我的"个人主页 ====================
+
+function renderProfilePage() {
+  var current = getCurrentUser();
+  if (!current) return;
+
+  // 头像
+  var avatarEl = document.getElementById('profile-avatar');
+  if (avatarEl) {
+    if (current.avatar) {
+      avatarEl.innerHTML = '<img src="' + current.avatar + '" alt="头像">';
+    } else {
+      avatarEl.innerHTML = '🎭';
+    }
+  }
+
+  // 昵称
+  var nicknameText = document.getElementById('profile-nickname-text');
+  if (nicknameText) {
+    nicknameText.textContent = current.nickname || current.username;
+  }
+
+  // 统计
+  var characters = loadData(getStorageKeys().characters);
+  var total = characters.length;
+  var active = 0, done = 0;
+  for (var i = 0; i < characters.length; i++) {
+    if (characters[i].status === 'done') done++;
+    else active++;
+  }
+  var psTotal = document.getElementById('ps-total');
+  var psActive = document.getElementById('ps-active');
+  var psDone = document.getElementById('ps-done');
+  if (psTotal) psTotal.textContent = total;
+  if (psActive) psActive.textContent = active;
+  if (psDone) psDone.textContent = done;
+
+  // 时间线
+  renderProfileTimeline();
+}
+
+function renderProfileTimeline() {
+  var container = document.getElementById('profile-timeline');
+  if (!container) return;
+  var timeline = getTimeline();
+  if (timeline.length === 0) {
+    container.innerHTML = '<div class="timeline-empty">📭 暂无记录<br><span style="font-size:11px;">创建角色并更新状态后，时间线将自动生成</span></div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < timeline.length; i++) {
+    var e = timeline[i];
+    var timeStr = formatRelativeTime(e.timestamp);
+    html += '<div class="timeline-item">' +
+      '<div class="timeline-dot ' + e.type + '"></div>' +
+      '<div class="timeline-card">' +
+        '<div class="tl-title">' + escapeHtml(e.characterName) + '</div>' +
+        '<div class="tl-detail">' + escapeHtml(e.detail) + '</div>' +
+        '<div class="tl-time">' + timeStr + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
 // ==================== 数据导出导入 ====================
 
 /** 导出所有数据为 JSON 文件 */
@@ -4980,17 +5498,61 @@ function togglePrepView() {
     });
   }
 
-  // 显示当前用户名
-  var currentUser = getCurrentUser();
-  var usernameEl = document.getElementById('setting-username-display');
-  if (usernameEl && currentUser) {
-    usernameEl.textContent = currentUser.username;
+})();
+
+// ==================== 灵感 & 个人主页 事件绑定 ====================
+
+(function initInspirationAndProfile() {
+  // 灵感发送
+  var sendBtn = document.getElementById('inspiration-send-btn');
+  var inspInput = document.getElementById('inspiration-input');
+  if (sendBtn) { sendBtn.addEventListener('click', sendInspiration); }
+  if (inspInput) {
+    inspInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') sendInspiration();
+    });
   }
 
-  // 修改密码
-  var changePwBtn = document.getElementById('btn-change-password');
-  if (changePwBtn) {
-    changePwBtn.addEventListener('click', function () {
+  // 头像上传
+  var avatarWrap = document.getElementById('profile-avatar-wrap');
+  var avatarInput = document.getElementById('profile-avatar-input');
+  if (avatarWrap && avatarInput) {
+    avatarWrap.addEventListener('click', function () { avatarInput.click(); });
+    avatarInput.addEventListener('change', function () {
+      var file = avatarInput.files[0];
+      if (!file) return;
+      showToast('处理中...');
+      compressImage(file, 400, 0.5).then(function (base64) {
+        updateUserProfile({ avatar: base64 });
+        renderProfilePage();
+        showToast('头像已更新');
+      }).catch(function () {
+        showToast('头像处理失败');
+      });
+      avatarInput.value = '';
+    });
+  }
+
+  // 昵称编辑
+  var nicknameEl = document.getElementById('profile-nickname');
+  if (nicknameEl) {
+    nicknameEl.addEventListener('click', function () {
+      var current = getCurrentUser();
+      var newName = prompt('修改昵称', current ? (current.nickname || current.username) : '');
+      if (newName === null) return;
+      newName = newName.trim();
+      if (!newName) { showToast('昵称不能为空'); return; }
+      if (newName.length > 20) { showToast('昵称最多20个字符'); return; }
+      updateUserProfile({ nickname: newName });
+      renderProfilePage();
+      showToast('昵称已更新');
+    });
+  }
+
+  // 修改密码（profile 页面）
+  var chPwBtn = document.getElementById('btn-change-password-profile');
+  if (chPwBtn) {
+    chPwBtn.addEventListener('click', function () {
       var oldPw = prompt('请输入当前密码');
       if (oldPw === null) return;
       if (!oldPw.trim()) { showToast('请输入当前密码'); return; }
@@ -5005,8 +5567,8 @@ function togglePrepView() {
     });
   }
 
-  // 退出登录
-  var logoutBtn = document.getElementById('btn-logout');
+  // 退出登录（profile 页面）
+  var logoutBtn = document.getElementById('btn-logout-profile');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
       openConfirmDialog('确定要退出登录吗？', '数据不会丢失，下次登录后可恢复', logoutUser);
