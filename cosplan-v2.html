@@ -3768,15 +3768,18 @@ function showCharacterDetail(charId) {
     (ch.bio ? '<div class="detail-bio">' + escapeHtml(ch.bio) + '</div>' : '') +
     refHtml +
     // === 筹备清单 ===
-    '<div class="detail-section"><h3>📋 筹备清单 <span style="font-size:11px;color:var(--text-muted);">' + prepDone + '/' + prepItems.length + '</span></h3>' +
+    '<div class="detail-section" id="detail-go-prep" style="cursor:pointer;">' +
+      '<h3>📋 筹备清单 <span style="font-size:11px;color:var(--text-muted);">' + prepDone + '/' + prepItems.length + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:auto;">查看详情 ▸</span></h3>' +
       prepDetailHtml +
     '</div>' +
     // === 照片素材 ===
-    '<div class="detail-section"><h3>🖼️ 照片素材 <span style="font-size:11px;color:var(--text-muted);">' + photoStats.total + '张</span></h3>' +
+    '<div class="detail-section" id="detail-go-photos" style="cursor:pointer;">' +
+      '<h3>🖼️ 照片素材 <span style="font-size:11px;color:var(--text-muted);">' + photoStats.total + '张</span><span style="font-size:11px;color:var(--text-muted);margin-left:auto;">查看详情 ▸</span></h3>' +
       photoHtml +
     '</div>' +
     // === 文案 ===
-    '<div class="detail-section"><h3>✍️ 文案 <span style="font-size:11px;color:var(--text-muted);">' + copies.length + '条</span></h3>' +
+    '<div class="detail-section" id="detail-go-copy" style="cursor:pointer;">' +
+      '<h3>✍️ 文案 <span style="font-size:11px;color:var(--text-muted);">' + copies.length + '条</span><span style="font-size:11px;color:var(--text-muted);margin-left:auto;">查看详情 ▸</span></h3>' +
       copyHtml +
     '</div>' +
     '<div class="btn-group">' +
