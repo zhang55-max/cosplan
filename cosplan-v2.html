@@ -1875,26 +1875,59 @@
       opacity: 0.4;
       transition: opacity var(--transition);
     }
-    .ins-actions {
-      opacity: 1;
+    .ins-tap-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-left: auto;
+      opacity: 0.5;
     }
-    .ins-edit-btn, .ins-del-btn {
-      width: 32px; height: 32px;
-      min-width: 44px; min-height: 44px;
-      padding: 6px;
-      border-radius: 50%;
+    .ins-expand-actions {
+      display: none;
+      margin-top: var(--space-sm);
+    }
+    .inspiration-item.expanded .ins-expand-actions {
+      display: block;
+    }
+    .ins-edit-textarea {
+      width: 100%;
+      min-height: 60px;
+      padding: var(--space-sm);
       border: 1.5px solid var(--border);
-      background: var(--card);
-      cursor: pointer;
-      font-size: 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background var(--transition);
-      box-sizing: content-box;
+      border-radius: var(--radius);
+      font-size: var(--font-base);
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+      resize: vertical;
+      outline: none;
     }
-    .ins-edit-btn:active { background: var(--card-hover); }
-    .ins-del-btn:active { background: var(--card-hover); }
+    .ins-edit-textarea:focus { border-color: var(--primary); }
+    .ins-expand-btns {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+    .ins-save-btn, .ins-delete-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: var(--font-base);
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .ins-save-btn {
+      background: var(--gradient);
+      color: var(--text-on-accent);
+    }
+    .ins-save-btn:active { opacity: 0.8; }
+    .ins-delete-btn {
+      background: transparent;
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+    }
+    .ins-delete-btn:active { background: rgba(255,59,48,0.08); }
     .ins-history-badge {
       font-size: 10px;
       color: var(--primary);
@@ -2962,12 +2995,17 @@ function renderInspirations() {
       '<div class="ins-meta">' +
         '<span class="ins-time">' + formatRelativeTime(item.createdAt) + '</span>' +
         (historyCount > 0 ? '<span class="ins-history-badge">已编辑 ' + historyCount + ' 次</span>' : '') +
-        '<span class="ins-actions">' +
-          '<button class="ins-edit-btn" data-ins-id="' + item.id + '" title="编辑">✏️</button>' +
-          '<button class="ins-del-btn" data-ins-id="' + item.id + '" title="删除">🗑️</button>' +
-        '</span>' +
+        '<span class="ins-tap-hint">轻点展开编辑</span>' +
+      '</div>' +
+      // 展开后显示的操作区
+      '<div class="ins-expand-actions">' +
+        '<textarea class="ins-edit-textarea" placeholder="输入新内容..."></textarea>' +
+        '<div class="ins-expand-btns">' +
+          '<button class="ins-save-btn">保存修改</button>' +
+          '<button class="ins-delete-btn">删除此条</button>' +
+        '</div>' +
       '</div>';
-    // 编辑历史（展开时可见）
+    // 编辑历史
     if ((item.history || []).length > 0) {
       html += '<div class="ins-history">';
       for (var h = 0; h < item.history.length; h++) {
@@ -2987,40 +3025,58 @@ function renderInspirations() {
   container.innerHTML = html;
   container.setAttribute('data-show-all', showAll ? 'true' : 'false');
 
-  // 点击条目：展开/收起
+  // 点击条目展开/收起；展开后操作区按钮绑定
   var items = container.querySelectorAll('.inspiration-item');
   for (var j = 0; j < items.length; j++) {
     (function (item) {
-      item.addEventListener('click', function (e) {
-        // 点编辑按钮
-        if (e.target.closest && e.target.closest('.ins-edit-btn')) {
-          var id = item.getAttribute('data-ins-id');
-          var list2 = getInspirations();
-          var found = null;
-          for (var f = 0; f < list2.length; f++) {
-            if (list2[f].id === id) { found = list2[f]; break; }
+      var insId = item.getAttribute('data-ins-id');
+
+      // 点击内容区 → 展开/收起
+      var contentEl = item.querySelector('.ins-content');
+      if (contentEl) {
+        contentEl.addEventListener('click', function () {
+          item.classList.toggle('expanded');
+          // 展开时预填编辑区
+          if (item.classList.contains('expanded')) {
+            var ta = item.querySelector('.ins-edit-textarea');
+            if (ta) {
+              var list3 = getInspirations();
+              var cur = null;
+              for (var x = 0; x < list3.length; x++) {
+                if (list3[x].id === insId) { cur = list3[x]; break; }
+              }
+              ta.value = cur ? cur.content : '';
+            }
           }
-          var oldContent = found ? found.content : '';
-          var newContent = prompt('编辑灵感（原内容将保留在历史中）', oldContent);
-          if (newContent === null || newContent.trim() === '') return;
-          editInspiration(id, newContent);
+        });
+      }
+
+      // 保存按钮
+      var saveBtn = item.querySelector('.ins-save-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var ta = item.querySelector('.ins-edit-textarea');
+          var newContent = ta ? ta.value.trim() : '';
+          if (!newContent) { showToast('内容不能为空'); return; }
+          editInspiration(insId, newContent);
           renderInspirations();
           showToast('灵感已更新');
-          return;
-        }
-        // 点删除按钮
-        if (e.target.closest && e.target.closest('.ins-del-btn')) {
-          var id = item.getAttribute('data-ins-id');
+        });
+      }
+
+      // 删除按钮
+      var delBtn = item.querySelector('.ins-delete-btn');
+      if (delBtn) {
+        delBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
           if (confirm('确定要删除这条灵感吗？')) {
-            deleteInspiration(id);
+            deleteInspiration(insId);
             renderInspirations();
             showToast('已删除');
           }
-          return;
-        }
-        // 否则展开/收起
-        item.classList.toggle('expanded');
-      });
+        });
+      }
     })(items[j]);
   }
 
@@ -5073,14 +5129,45 @@ function renderAccountList() {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
         var uid = btn.getAttribute('data-user-id');
-        var pw = prompt('输入密码以切换账号');
-        if (pw === null || pw === '') return;
-        loginUser(uid, pw).then(function (user) {
-          showToast('已切换到：' + user.username);
-          location.reload();
-        }).catch(function () {
-          showToast('密码错误，切换失败');
-        });
+        // 如果已有内联输入框则提交，否则展开输入框
+        var row = btn.parentElement;
+        var existingInput = row.querySelector('.account-pw-input');
+        if (existingInput) {
+          var pw = existingInput.value;
+          if (!pw) { showToast('请输入密码'); return; }
+          loginUser(uid, pw).then(function (user) {
+            showToast('已切换到：' + user.username);
+            location.reload();
+          }).catch(function () {
+            showToast('密码错误，切换失败');
+          });
+          return;
+        }
+        // 展开密码输入
+        var inputHtml = '<input class="account-pw-input" type="password" placeholder="输入密码" style="width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-sm);margin-left:8px;min-height:36px;" autocomplete="current-password">' +
+          '<button class="account-pw-confirm" style="padding:4px 10px;margin-left:4px;border-radius:var(--radius-sm);border:none;background:var(--gradient);color:var(--text-on-accent);font-size:var(--font-sm);cursor:pointer;min-height:36px;">确认</button>';
+        btn.insertAdjacentHTML('afterend', inputHtml);
+        btn.style.display = 'none';
+        // 绑定确认按钮
+        var confirmBtn = row.querySelector('.account-pw-confirm');
+        var pwInput = row.querySelector('.account-pw-input');
+        if (confirmBtn && pwInput) {
+          pwInput.focus();
+          var doSwitch = function () {
+            var pw = pwInput.value;
+            if (!pw) { showToast('请输入密码'); return; }
+            loginUser(uid, pw).then(function (user) {
+              showToast('已切换到：' + user.username);
+              location.reload();
+            }).catch(function () {
+              showToast('密码错误，切换失败');
+            });
+          };
+          confirmBtn.addEventListener('click', doSwitch);
+          pwInput.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') doSwitch();
+          });
+        }
       });
     })(btns[j]);
   }
