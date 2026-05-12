@@ -5531,7 +5531,7 @@ function renderOverview() {
             '<div class="ov-title' + (item.completed ? ' done' : '') + '">' + escapeHtml(item.title) + '</div>' +
             (item.note ? '<div style="font-size:11px;color:var(--text-muted);">' + escapeHtml(item.note) + '</div>' : '') +
             (item.link ? '<a style="font-size:11px;color:var(--primary);" href="' + item.link + '" target="_blank">🔗 链接</a>' : '') +
-            (getPrepImages(item).length > 0 ? '<div class="ov-img-row">' + (function() { var imgs = getPrepImages(item); var h = ''; for (var gi = 0; gi < imgs.length; gi++) { h += '<img src="' + imgs[gi] + '" alt="参考图" style="width:60px;height:60px;border-radius:6px;object-fit:cover;">'; } return h; })() + '</div>' : '') +
+            (getPrepImages(item).length > 0 ? (function() { var imgs = getPrepImages(item); var h = ''; for (var gi = 0; gi < imgs.length; gi++) { h += '<div class="ov-img-full" style="margin-top:6px;"><img src="' + imgs[gi] + '" alt="参考图" style="width:100%;border-radius:8px;display:block;"></div>'; } return h; })() : '') +
           '</div>' +
         '</div>';
       }
