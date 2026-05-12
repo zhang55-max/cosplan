@@ -2848,9 +2848,9 @@ function editInspiration(id, newContent) {
   for (var i = 0; i < list.length; i++) {
     if (list[i].id === id) {
       if (!list[i].history) list[i].history = [];
-      list[i].history.unshift({ content: list[i].content, editedAt: Date.now() });
+      list[i].history.unshift({ content: list[i].content, editedAt: list[i].updatedAt || list[i].createdAt });
       list[i].content = newContent;
-      // createdAt 保持不变，始终为首次创建时间
+      list[i].updatedAt = Date.now();
       break;
     }
   }
@@ -2993,7 +2993,7 @@ function renderInspirations() {
     html += '<div class="inspiration-item" data-ins-id="' + item.id + '">' +
       '<div class="ins-content">' + escapeHtml(item.content) + '</div>' +
       '<div class="ins-meta">' +
-        '<span class="ins-time">' + formatRelativeTime(item.createdAt) + '</span>' +
+        '<span class="ins-time">' + formatRelativeTime(item.updatedAt || item.createdAt) + '</span>' +
         (historyCount > 0 ? '<span class="ins-history-badge">已编辑 ' + historyCount + ' 次</span>' : '') +
         '<span class="ins-tap-hint">轻点展开编辑</span>' +
       '</div>' +
