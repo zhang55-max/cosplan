@@ -1875,22 +1875,26 @@
       opacity: 0.4;
       transition: opacity var(--transition);
     }
-    .inspiration-item:hover .ins-actions,
-    .inspiration-item.expanded .ins-actions { opacity: 1; }
+    .ins-actions {
+      opacity: 1;
+    }
     .ins-edit-btn, .ins-del-btn {
-      width: 26px; height: 26px;
+      width: 32px; height: 32px;
+      min-width: 44px; min-height: 44px;
+      padding: 6px;
       border-radius: 50%;
-      border: none;
-      background: transparent;
+      border: 1.5px solid var(--border);
+      background: var(--card);
       cursor: pointer;
-      font-size: 12px;
-      display: flex;
+      font-size: 16px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: background var(--transition);
+      box-sizing: content-box;
     }
-    .ins-edit-btn:hover { background: var(--card-hover); }
-    .ins-del-btn:hover { background: var(--card-hover); }
+    .ins-edit-btn:active { background: var(--card-hover); }
+    .ins-del-btn:active { background: var(--card-hover); }
     .ins-history-badge {
       font-size: 10px;
       color: var(--primary);
