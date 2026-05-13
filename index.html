@@ -2144,9 +2144,11 @@
     <!-- 统计栏 -->
     <div class="photo-stats-bar" id="photo-stats-bar"></div>
     <!-- 上传/添加按钮 -->
-    <button class="photo-upload-btn" id="btn-upload-photo">📷 上传照片（可批量）</button>
+    <label class="photo-upload-btn" id="btn-upload-photo" style="position:relative;overflow:hidden;">
+      📷 上传照片（可多选）
+      <input type="file" accept="image/*" id="photo-file-input" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+    </label>
     <button class="photo-upload-btn" id="btn-add-media" style="display:none;">+ 添加素材</button>
-    <input type="file" accept="image/*" id="photo-file-input" style="display:none;">
   </main>
 
   <!-- ====== 视图 5：文案生成器 + 设置 ====== -->
@@ -2204,7 +2206,7 @@
         <span style="font-size:var(--font-sm);color:var(--text-muted);">清空所有数据</span>
         <button class="btn btn-danger" id="btn-reset-all" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🗑️ 重置</button>
       </div>
-      <input type="file" accept=".json" id="import-file-input" style="display:none;">
+      <input type="file" accept=".json" id="import-file-input" style="position:absolute;width:0;height:0;opacity:0;">
     </div>
   </main>
 
@@ -2266,7 +2268,7 @@
         <button class="btn btn-danger" id="btn-delete-account" style="flex:none;padding:6px 16px;font-size:var(--font-sm);background:var(--danger);color:#fff;">注销</button>
       </div>
     </div>
-    <input type="file" accept="image/*" id="profile-avatar-input" style="display:none;">
+    <input type="file" accept="image/*" id="profile-avatar-input" style="position:absolute;width:0;height:0;opacity:0;">
   </main>
 
   <!-- ====== 文案添加弹窗 ====== -->
@@ -2348,7 +2350,7 @@
               <div class="upload-text">点击上传头像</div>
             </div>
           </div>
-          <input type="file" accept="image/*" id="avatar-file-input" style="display:none;">
+          <input type="file" accept="image/*" id="avatar-file-input" style="position:absolute;width:0;height:0;opacity:0;">
         </div>
         <div class="form-group">
           <label>角色名 <span style="color:var(--danger);">*</span></label>
@@ -2376,7 +2378,7 @@
           <label>参考图集</label>
           <div class="ref-images-list" id="ref-images-container"></div>
           <button type="button" class="ref-add-btn" id="btn-add-ref-image" style="margin-top:6px;">+</button>
-          <input type="file" accept="image/*" id="ref-file-input" style="display:none;" multiple>
+          <input type="file" accept="image/*" id="ref-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
         </div>
         <div class="btn-group">
           <button type="submit" class="btn btn-primary" id="btn-save-character">保存角色</button>
@@ -2431,7 +2433,7 @@
             </div>
           </div>
           <div class="prep-imgs-grid" id="prep-imgs-grid"></div>
-          <input type="file" accept="image/*" id="prep-img-file-input" style="display:none;" multiple>
+          <input type="file" accept="image/*" id="prep-img-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
         </div>
         <div class="btn-group">
           <button type="submit" class="btn btn-primary" id="btn-save-prep">保存</button>
@@ -2504,7 +2506,7 @@
               <span style="font-size:12px;color:var(--text-muted);">点击选择视频文件（可多选）</span>
             </div>
           </div>
-          <input type="file" accept="video/*" id="video-file-input" style="display:none;" multiple>
+          <input type="file" accept="video/*" id="video-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个视频不超过50MB，将自动提取缩略图</div>
         </div>
         <!-- 音乐专用：导入音频文件 -->
@@ -2516,7 +2518,7 @@
               <span style="font-size:12px;color:var(--text-muted);">点击选择音频文件（可多选）</span>
             </div>
           </div>
-          <input type="file" accept="audio/*" id="audio-file-input" style="display:none;" multiple>
+          <input type="file" accept="audio/*" id="audio-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个音频不超过20MB</div>
         </div>
         <div class="form-group">
@@ -5991,40 +5993,37 @@ function togglePrepView() {
     });
   }
 
-  // 照片上传（连续选择模式：选完一批自动弹出继续选，直到用户取消）
+  // 照片上传（label内嵌input，移动端原生触发多选）
   var uploadBtn = document.getElementById('btn-upload-photo');
   var photoInput = document.getElementById('photo-file-input');
   var _batchPicking = false;
   var _batchTotal = 0;
-  var _batchPending = 0;  // 防止竞态：正在处理中的批次数量
-  if (uploadBtn && photoInput) {
+  var _batchPending = 0;
+  if (photoInput) {
     uploadBtn.addEventListener('click', function () {
       _batchPicking = true;
       _batchTotal = 0;
       _batchPending = 0;
-      photoInput.click();
     });
     photoInput.addEventListener('change', function () {
-      if (!_batchPicking) return;
+      if (!_batchPicking) { _batchPicking = true; _batchTotal = 0; _batchPending = 0; }
       var files = photoInput.files;
       photoInput.value = '';
-      if (!files || files.length === 0) return;
+      if (!files || files.length === 0) { _batchPicking = false; return; }
       _batchPending++;
       handlePhotoUpload(files, { silent: true, noRender: true }).then(function (ok) {
         _batchTotal += ok;
         _batchPending--;
-        showToast('已添加 ' + _batchTotal + ' 张，继续选择或点取消');
+        showToast('已添加 ' + _batchTotal + ' 张，继续选择或点「完成」');
         setTimeout(function () {
           if (_batchPicking) {
             photoInput.click();
           } else {
-            // 批次已结束且无 pending，刷新页面
             tryFinishBatch();
           }
-        }, 500);
+        }, 400);
       });
     });
-    // 用户取消文件选择器时 window 重新获得焦点
     window.addEventListener('focus', function () {
       if (!_batchPicking) return;
       setTimeout(function () {
@@ -6036,7 +6035,7 @@ function togglePrepView() {
     });
 
     function tryFinishBatch() {
-      if (_batchPending > 0) return;  // 还有处理中的，等它完成
+      if (_batchPending > 0) return;
       if (_batchTotal > 0) {
         showToast('共上传 ' + _batchTotal + ' 张照片');
         renderPhotoPage();
