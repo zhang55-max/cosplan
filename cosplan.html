@@ -1079,6 +1079,7 @@
       text-align: center;
       transition: border-color var(--transition);
       min-height: 44px;
+      position: relative;
     }
     .photo-upload-btn:active { border-color: var(--primary); }
 
@@ -1584,9 +1585,11 @@
     <!-- 统计栏 -->
     <div class="photo-stats-bar" id="photo-stats-bar"></div>
     <!-- 上传/添加按钮 -->
-    <label class="photo-upload-btn" id="btn-upload-photo" for="photo-file-input">📷 上传新照片</label>
+    <label class="photo-upload-btn" id="btn-upload-photo" style="position:relative;overflow:hidden;">
+      📷 上传新照片（可多选）
+      <input type="file" accept="image/*" id="photo-file-input" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+    </label>
     <button class="photo-upload-btn" id="btn-add-media" style="display:none;">+ 添加素材</button>
-    <input type="file" accept="image/*" id="photo-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
   </main>
 
   <!-- ====== 视图 5：文案生成器 + 设置 ====== -->
