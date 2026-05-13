@@ -2146,7 +2146,7 @@
     <!-- 上传/添加按钮 -->
     <button class="photo-upload-btn" id="btn-upload-photo">📷 上传照片（可批量）</button>
     <button class="photo-upload-btn" id="btn-add-media" style="display:none;">+ 添加素材</button>
-    <input type="file" accept="image/*" id="photo-file-input" style="display:none;" multiple>
+    <input type="file" accept="image/*" id="photo-file-input" style="display:none;">
   </main>
 
   <!-- ====== 视图 5：文案生成器 + 设置 ====== -->
@@ -4730,74 +4730,82 @@ function downloadPhoto() {
   }).catch(function () { showImage(photo.data); });
 }
 
-/** 上传照片处理 */
-function handlePhotoUpload(files) {
-  if (!photoSelectedCharId) { showToast('请先选择角色'); return; }
-  if (!files || files.length === 0) return;
+/** 上传照片处理（返回 Promise，resolve 成功数量） */
+function handlePhotoUpload(files, opts) {
+  opts = opts || {};
+  return new Promise(function (resolveAll) {
+    if (!photoSelectedCharId) { showToast('请先选择角色'); resolveAll(0); return; }
+    if (!files || files.length === 0) { resolveAll(0); return; }
 
-  var total = files.length;
-  var processed = 0;
-  var failed = 0;
+    var total = files.length;
+    var processed = 0;
+    var failed = 0;
 
-  function updateProgress() {
-    showToast('正在处理 ' + processed + '/' + total + ' 张照片...');
-  }
+    function updateProgress() {
+      showToast('正在处理 ' + processed + '/' + total + ' 张...');
+    }
 
-  if (total > 1) updateProgress();
+    if (total > 1) updateProgress();
 
-  for (var f = 0; f < total; f++) {
-    (function (file) {
-      var photoId = genId();
-      var reader = new FileReader();
-      reader.onload = function () {
-        var originalDataUrl = reader.result;
-        openIDB().then(function (db) {
-          var tx = db.transaction('files', 'readwrite');
-          tx.objectStore('files').put({ id: 'photo_orig_' + photoId, data: originalDataUrl });
-          db.close();
-        }).catch(function () {});
-      };
-      reader.readAsDataURL(file);
+    for (var f = 0; f < total; f++) {
+      (function (file) {
+        var photoId = genId();
+        var reader = new FileReader();
+        reader.onload = function () {
+          var originalDataUrl = reader.result;
+          openIDB().then(function (db) {
+            var tx = db.transaction('files', 'readwrite');
+            tx.objectStore('files').put({ id: 'photo_orig_' + photoId, data: originalDataUrl });
+            db.close();
+          }).catch(function () {});
+        };
+        reader.readAsDataURL(file);
 
-      compressImage(file, 800, 0.55).then(function (fullBase64) {
-        return compressImage(file, 200, 0.4).then(function (thumbBase64) {
-          var photo = {
-            id: photoId,
-            characterId: photoSelectedCharId,
-            data: fullBase64,
-            thumbnail: thumbBase64,
-            status: 'raw',
-            note: '',
-            createdAt: Date.now()
-          };
-          var photos = loadData(getStorageKeys().photos);
-          photos.push(photo);
-          saveData(getStorageKeys().photos, photos);
+        compressImage(file, 800, 0.55).then(function (fullBase64) {
+          return compressImage(file, 200, 0.4).then(function (thumbBase64) {
+            var photo = {
+              id: photoId,
+              characterId: photoSelectedCharId,
+              data: fullBase64,
+              thumbnail: thumbBase64,
+              status: 'raw',
+              note: '',
+              createdAt: Date.now()
+            };
+            var photos = loadData(getStorageKeys().photos);
+            photos.push(photo);
+            saveData(getStorageKeys().photos, photos);
 
-          processed++;
-          if (total > 1 && processed < total) updateProgress();
+            processed++;
+            if (total > 1 && processed < total) updateProgress();
+            if (processed + failed === total) finishUpload(total, failed);
+          });
+        }).catch(function () {
+          failed++;
           if (processed + failed === total) finishUpload(total, failed);
         });
-      }).catch(function () {
-        failed++;
-        if (processed + failed === total) finishUpload(total, failed);
-      });
-    })(files[f]);
-  }
-
-  var finished = false;
-  function finishUpload(total, failed) {
-    if (finished) return;
-    finished = true;
-    var ok = total - failed;
-    if (failed > 0) {
-      showToast('已上传 ' + ok + ' 张，' + failed + ' 张失败');
-    } else {
-      showToast('已上传 ' + ok + ' 张照片');
+      })(files[f]);
     }
-    renderPhotoPage();
-    renderDashboard();
-  }
+
+    var finished = false;
+    function finishUpload(total, failed) {
+      if (finished) return;
+      finished = true;
+      var ok = total - failed;
+      if (!opts.silent) {
+        if (failed > 0) {
+          showToast('已上传 ' + ok + ' 张，' + failed + ' 张失败');
+        } else if (!opts.noToast) {
+          showToast('已上传 ' + ok + ' 张照片');
+        }
+      }
+      if (!opts.noRender) {
+        renderPhotoPage();
+        renderDashboard();
+      }
+      resolveAll(ok);
+    }
+  });
 }
 
 // ==================== IndexedDB（视频/音频文件存储） ====================
@@ -5983,15 +5991,58 @@ function togglePrepView() {
     });
   }
 
-  // 照片上传
+  // 照片上传（连续选择模式：选完一批自动弹出继续选，直到用户取消）
   var uploadBtn = document.getElementById('btn-upload-photo');
   var photoInput = document.getElementById('photo-file-input');
+  var _batchPicking = false;
+  var _batchTotal = 0;
+  var _batchPending = 0;  // 防止竞态：正在处理中的批次数量
   if (uploadBtn && photoInput) {
-    uploadBtn.addEventListener('click', function () { photoInput.click(); });
-    photoInput.addEventListener('change', function () {
-      handlePhotoUpload(photoInput.files);
-      photoInput.value = '';
+    uploadBtn.addEventListener('click', function () {
+      _batchPicking = true;
+      _batchTotal = 0;
+      _batchPending = 0;
+      photoInput.click();
     });
+    photoInput.addEventListener('change', function () {
+      if (!_batchPicking) return;
+      var files = photoInput.files;
+      photoInput.value = '';
+      if (!files || files.length === 0) return;
+      _batchPending++;
+      handlePhotoUpload(files, { silent: true, noRender: true }).then(function (ok) {
+        _batchTotal += ok;
+        _batchPending--;
+        showToast('已添加 ' + _batchTotal + ' 张，继续选择或点取消');
+        setTimeout(function () {
+          if (_batchPicking) {
+            photoInput.click();
+          } else {
+            // 批次已结束且无 pending，刷新页面
+            tryFinishBatch();
+          }
+        }, 500);
+      });
+    });
+    // 用户取消文件选择器时 window 重新获得焦点
+    window.addEventListener('focus', function () {
+      if (!_batchPicking) return;
+      setTimeout(function () {
+        if (_batchPicking) {
+          _batchPicking = false;
+          tryFinishBatch();
+        }
+      }, 600);
+    });
+
+    function tryFinishBatch() {
+      if (_batchPending > 0) return;  // 还有处理中的，等它完成
+      if (_batchTotal > 0) {
+        showToast('共上传 ' + _batchTotal + ' 张照片');
+        renderPhotoPage();
+        renderDashboard();
+      }
+    }
   }
 
   // 视频/音乐添加按钮
