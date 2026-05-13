@@ -1584,9 +1584,9 @@
     <!-- 统计栏 -->
     <div class="photo-stats-bar" id="photo-stats-bar"></div>
     <!-- 上传/添加按钮 -->
-    <button class="photo-upload-btn" id="btn-upload-photo">📷 上传新照片</button>
+    <label class="photo-upload-btn" id="btn-upload-photo" for="photo-file-input">📷 上传新照片</label>
     <button class="photo-upload-btn" id="btn-add-media" style="display:none;">+ 添加素材</button>
-    <input type="file" accept="image/*" id="photo-file-input" style="display:none;" multiple>
+    <input type="file" accept="image/*" id="photo-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
   </main>
 
   <!-- ====== 视图 5：文案生成器 + 设置 ====== -->
@@ -1643,7 +1643,7 @@
         <span style="font-size:var(--font-sm);color:var(--text-muted);">清空所有数据</span>
         <button class="btn btn-danger" id="btn-reset-all" style="flex:none;padding:6px 16px;font-size:var(--font-sm);">🗑️ 重置</button>
       </div>
-      <input type="file" accept=".json" id="import-file-input" style="display:none;">
+      <input type="file" accept=".json" id="import-file-input" style="position:absolute;width:0;height:0;opacity:0;">
     </div>
   </main>
 
@@ -1722,7 +1722,7 @@
               <div class="upload-text">点击上传头像</div>
             </div>
           </div>
-          <input type="file" accept="image/*" id="avatar-file-input" style="display:none;">
+          <input type="file" accept="image/*" id="avatar-file-input" style="position:absolute;width:0;height:0;opacity:0;">
         </div>
         <div class="form-group">
           <label>角色名 <span style="color:var(--danger);">*</span></label>
@@ -1750,7 +1750,7 @@
           <label>参考图集</label>
           <div class="ref-images-list" id="ref-images-container"></div>
           <button type="button" class="ref-add-btn" id="btn-add-ref-image" style="margin-top:6px;">+</button>
-          <input type="file" accept="image/*" id="ref-file-input" style="display:none;" multiple>
+          <input type="file" accept="image/*" id="ref-file-input" style="position:absolute;width:0;height:0;opacity:0;" multiple>
         </div>
         <div class="btn-group">
           <button type="submit" class="btn btn-primary" id="btn-save-character">保存角色</button>
@@ -1803,7 +1803,7 @@
               <span style="font-size:12px;color:var(--text-muted);">点击上传参考图</span>
             </div>
           </div>
-          <input type="file" accept="image/*" id="prep-img-file-input" style="display:none;">
+          <input type="file" accept="image/*" id="prep-img-file-input" style="position:absolute;width:0;height:0;opacity:0;">
         </div>
         <div class="btn-group">
           <button type="submit" class="btn btn-primary" id="btn-save-prep">保存</button>
@@ -1875,7 +1875,7 @@
               <span style="font-size:12px;color:var(--text-muted);">点击选择视频文件</span>
             </div>
           </div>
-          <input type="file" accept="video/*" id="video-file-input" style="display:none;">
+          <input type="file" accept="video/*" id="video-file-input" style="position:absolute;width:0;height:0;opacity:0;">
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个视频不超过50MB，将自动提取缩略图</div>
         </div>
         <!-- 音乐专用：导入音频文件 -->
@@ -1887,7 +1887,7 @@
               <span style="font-size:12px;color:var(--text-muted);">点击选择音频文件</span>
             </div>
           </div>
-          <input type="file" accept="audio/*" id="audio-file-input" style="display:none;">
+          <input type="file" accept="audio/*" id="audio-file-input" style="position:absolute;width:0;height:0;opacity:0;">
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个音频不超过20MB</div>
         </div>
         <div class="form-group">
@@ -4431,13 +4431,14 @@ function togglePrepView() {
     });
   }
 
-  // 照片上传
-  var uploadBtn = document.getElementById('btn-upload-photo');
+  // 照片上传（label 自动触发 input，无需手动 click）
   var photoInput = document.getElementById('photo-file-input');
-  if (uploadBtn && photoInput) {
-    uploadBtn.addEventListener('click', function () { photoInput.click(); });
+  if (photoInput) {
     photoInput.addEventListener('change', function () {
-      handlePhotoUpload(photoInput.files);
+      if (photoInput.files && photoInput.files.length > 0) {
+        showToast('正在处理 ' + photoInput.files.length + ' 张照片...');
+        handlePhotoUpload(photoInput.files);
+      }
       photoInput.value = '';
     });
   }
