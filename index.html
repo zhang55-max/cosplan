@@ -5993,55 +5993,19 @@ function togglePrepView() {
     });
   }
 
-  // 照片上传（label内嵌input，移动端原生触发多选）
+  // 照片上传（input 内嵌 label，移动端原生支持多选）
   var uploadBtn = document.getElementById('btn-upload-photo');
   var photoInput = document.getElementById('photo-file-input');
-  var _batchPicking = false;
-  var _batchTotal = 0;
-  var _batchPending = 0;
   if (photoInput) {
-    uploadBtn.addEventListener('click', function () {
-      _batchPicking = true;
-      _batchTotal = 0;
-      _batchPending = 0;
-    });
     photoInput.addEventListener('change', function () {
-      if (!_batchPicking) { _batchPicking = true; _batchTotal = 0; _batchPending = 0; }
       var files = photoInput.files;
-      photoInput.value = '';
-      if (!files || files.length === 0) { _batchPicking = false; return; }
-      _batchPending++;
-      handlePhotoUpload(files, { silent: true, noRender: true }).then(function (ok) {
-        _batchTotal += ok;
-        _batchPending--;
-        showToast('已添加 ' + _batchTotal + ' 张，继续选择或点「完成」');
-        setTimeout(function () {
-          if (_batchPicking) {
-            photoInput.click();
-          } else {
-            tryFinishBatch();
-          }
-        }, 400);
+      if (!files || files.length === 0) return;
+      showToast('正在处理 ' + files.length + ' 张照片...');
+      handlePhotoUpload(files).then(function (ok) {
+        showToast('共上传 ' + ok + ' 张照片');
+        photoInput.value = '';
       });
     });
-    window.addEventListener('focus', function () {
-      if (!_batchPicking) return;
-      setTimeout(function () {
-        if (_batchPicking) {
-          _batchPicking = false;
-          tryFinishBatch();
-        }
-      }, 600);
-    });
-
-    function tryFinishBatch() {
-      if (_batchPending > 0) return;
-      if (_batchTotal > 0) {
-        showToast('共上传 ' + _batchTotal + ' 张照片');
-        renderPhotoPage();
-        renderDashboard();
-      }
-    }
   }
 
   // 视频/音乐添加按钮
