@@ -2144,7 +2144,7 @@
     <!-- 统计栏 -->
     <div class="photo-stats-bar" id="photo-stats-bar"></div>
     <!-- 上传/添加按钮 -->
-    <button class="photo-upload-btn" id="btn-upload-photo">📷 上传新照片</button>
+    <button class="photo-upload-btn" id="btn-upload-photo">📷 上传照片（可批量）</button>
     <button class="photo-upload-btn" id="btn-add-media" style="display:none;">+ 添加素材</button>
     <input type="file" accept="image/*" id="photo-file-input" style="display:none;" multiple>
   </main>
@@ -2501,10 +2501,10 @@
           <div class="video-import-area" id="video-import-area">
             <div class="video-placeholder">
               <span style="font-size:28px;">🎬</span>
-              <span style="font-size:12px;color:var(--text-muted);">点击选择视频文件</span>
+              <span style="font-size:12px;color:var(--text-muted);">点击选择视频文件（可多选）</span>
             </div>
           </div>
-          <input type="file" accept="video/*" id="video-file-input" style="display:none;">
+          <input type="file" accept="video/*" id="video-file-input" style="display:none;" multiple>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个视频不超过50MB，将自动提取缩略图</div>
         </div>
         <!-- 音乐专用：导入音频文件 -->
@@ -2513,10 +2513,10 @@
           <div class="video-import-area" id="audio-import-area" style="position:relative;">
             <div class="video-placeholder">
               <span style="font-size:28px;">🎵</span>
-              <span style="font-size:12px;color:var(--text-muted);">点击选择音频文件</span>
+              <span style="font-size:12px;color:var(--text-muted);">点击选择音频文件（可多选）</span>
             </div>
           </div>
-          <input type="file" accept="audio/*" id="audio-file-input" style="display:none;">
+          <input type="file" accept="audio/*" id="audio-file-input" style="display:none;" multiple>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">建议单个音频不超过20MB</div>
         </div>
         <div class="form-group">
@@ -4735,10 +4735,18 @@ function handlePhotoUpload(files) {
   if (!photoSelectedCharId) { showToast('请先选择角色'); return; }
   if (!files || files.length === 0) return;
 
+  var total = files.length;
   var processed = 0;
-  for (var f = 0; f < files.length; f++) {
+  var failed = 0;
+
+  function updateProgress() {
+    showToast('正在处理 ' + processed + '/' + total + ' 张照片...');
+  }
+
+  if (total > 1) updateProgress();
+
+  for (var f = 0; f < total; f++) {
     (function (file) {
-      // 存原图到 IndexedDB
       var photoId = genId();
       var reader = new FileReader();
       reader.onload = function () {
@@ -4767,20 +4775,28 @@ function handlePhotoUpload(files) {
           saveData(getStorageKeys().photos, photos);
 
           processed++;
-          if (processed === files.length) {
-            showToast('已上传 ' + processed + ' 张照片');
-            renderPhotoPage();
-            renderDashboard();
-          }
+          if (total > 1 && processed < total) updateProgress();
+          if (processed + failed === total) finishUpload(total, failed);
         });
       }).catch(function () {
-        processed++;
-        if (processed === files.length) {
-          renderPhotoPage();
-          renderDashboard();
-        }
+        failed++;
+        if (processed + failed === total) finishUpload(total, failed);
       });
     })(files[f]);
+  }
+
+  var finished = false;
+  function finishUpload(total, failed) {
+    if (finished) return;
+    finished = true;
+    var ok = total - failed;
+    if (failed > 0) {
+      showToast('已上传 ' + ok + ' 张，' + failed + ' 张失败');
+    } else {
+      showToast('已上传 ' + ok + ' 张照片');
+    }
+    renderPhotoPage();
+    renderDashboard();
   }
 }
 
@@ -4904,7 +4920,80 @@ function handleAudioFileSelect(file) {
   showToast('音频已就绪，点击保存生效');
 }
 
-/** 渲染视频导入预览 */
+/** 批量保存视频/音频文件 */
+function batchSaveMediaFiles(files, type) {
+  var total = files.length;
+  var processed = 0;
+  var skipped = 0;
+  var finished = false;
+  var maxSize = type === 'video' ? 50 * 1024 * 1024 : 20 * 1024 * 1024;
+  var sizeLabel = type === 'video' ? '50MB' : '20MB';
+  var typeLabel = type === 'video' ? '视频' : '音频';
+  var storageKey = type === 'video' ? getStorageKeys().videos : getStorageKeys().music;
+  var charId = photoSelectedCharId;
+
+  function endBatch() {
+    if (finished) return;
+    finished = true;
+    var ok = processed;
+    if (skipped > 0) {
+      showToast('已添加 ' + ok + ' 个' + typeLabel + '，' + skipped + ' 个跳过');
+    } else {
+      showToast('已添加 ' + ok + ' 个' + typeLabel);
+    }
+    renderPhotoPage();
+  }
+
+  showToast('正在处理 1/' + total + ' 个' + typeLabel + '...');
+
+  for (var f = 0; f < total; f++) {
+    (function (file) {
+      var p = Promise.resolve().then(function () {
+        if (file.size > maxSize) {
+          skipped++;
+          showToast('「' + file.name + '」超过' + sizeLabel + '，已跳过');
+          return 'skip';
+        }
+        // 提取标题：去掉扩展名
+        var title = file.name.replace(/\.[^.]+$/, '').substring(0, 40);
+        var mediaId = genId();
+        if (type === 'video') {
+          return extractVideoThumb(file).then(function (thumb) {
+            var item = {
+              id: mediaId, characterId: charId, title: title,
+              artist: '', link: '', note: '', status: 'ref',
+              hasFile: true, thumb: thumb, createdAt: Date.now()
+            };
+            var items = loadData(storageKey);
+            items.push(item);
+            saveData(storageKey, items);
+            return idbPut(mediaId, file);
+          });
+        } else {
+          var item = {
+            id: mediaId, characterId: charId, title: title,
+            artist: '', link: '', note: '', status: 'ref',
+            hasFile: true, thumb: '', createdAt: Date.now()
+          };
+          var items = loadData(storageKey);
+          items.push(item);
+          saveData(storageKey, items);
+          return idbPut(mediaId, file);
+        }
+      }).then(function (result) {
+        if (result === 'skip') {
+          if (processed + skipped === total) endBatch();
+          return;
+        }
+        processed++;
+        if (processed + skipped < total) {
+          showToast('正在处理 ' + (processed + skipped) + '/' + total + ' 个' + typeLabel + '...');
+        }
+        if (processed + skipped === total) endBatch();
+      });
+    })(files[f]);
+  }
+}
 function renderVideoImportPreview() {
   var area = document.getElementById('video-import-area');
   if (!area) return;
@@ -4920,7 +5009,7 @@ function renderVideoImportPreview() {
     area.style.position = '';
     area.innerHTML =
       '<div class="video-placeholder"><span style="font-size:28px;">🎬</span>' +
-      '<span style="font-size:12px;color:var(--text-muted);">点击选择视频文件</span></div>';
+      '<span style="font-size:12px;color:var(--text-muted);">点击选择视频文件（可多选）</span></div>';
     area.classList.remove('has-video');
   }
 }
@@ -4942,7 +5031,7 @@ function renderAudioImportPreview() {
     area.style.position = '';
     area.innerHTML =
       '<div class="video-placeholder"><span style="font-size:28px;">🎵</span>' +
-      '<span style="font-size:12px;color:var(--text-muted);">点击选择音频文件</span></div>';
+      '<span style="font-size:12px;color:var(--text-muted);">点击选择音频文件（可多选）</span></div>';
     area.classList.remove('has-video');
   }
 }
@@ -5665,7 +5754,7 @@ function togglePrepView() {
     });
   }
 
-  // 参考图添加按钮
+  // 参考图添加按钮（支持批量）
   var refAddBtn = document.getElementById('btn-add-ref-image');
   var refInput = document.getElementById('ref-file-input');
   if (refAddBtn && refInput) {
@@ -5681,18 +5770,22 @@ function togglePrepView() {
         return;
       }
 
+      var total = files.length;
       var processed = 0;
-      for (var f = 0; f < files.length; f++) {
+      var failed = 0;
+      if (total > 1) showToast('正在处理 1/' + total + ' 张...');
+      for (var f = 0; f < total; f++) {
         (function (file) {
           compressImage(file, 800, 0.55).then(function (base64) {
             tempRefImages.push({ id: genId(), data: base64, note: '' });
             processed++;
-            if (processed === files.length || tempRefImages.length >= 20) {
+            if (total > 1 && processed < total) showToast('正在处理 ' + processed + '/' + total + ' 张...');
+            if (processed + failed === total) {
               renderRefImagesPreview();
               showToast('已添加 ' + processed + ' 张参考图');
             }
           }).catch(function () {
-            processed++;
+            failed++;
           });
         })(files[f]);
       }
@@ -5812,7 +5905,7 @@ function togglePrepView() {
   // 编辑状态下的分类字段：在打开编辑表单时隐藏
   // 已在 openPrepForm 中处理
 
-  // 筹备项参考图上传
+  // 筹备项参考图上传（支持批量）
   var prepImgArea = document.getElementById('prep-img-upload-area');
   var prepImgInput = document.getElementById('prep-img-file-input');
   if (prepImgArea && prepImgInput) {
@@ -5826,18 +5919,21 @@ function togglePrepView() {
         prepImgInput.value = '';
         return;
       }
-      showToast('处理中...');
+      var total = files.length;
       var processed = 0;
-      for (var f = 0; f < files.length; f++) {
+      var failed = 0;
+      if (total > 1) showToast('正在处理 1/' + total + ' 张...');
+      for (var f = 0; f < total; f++) {
         (function (file) {
           compressImage(file, 800, 0.55).then(function (base64) {
             tempPrepImages.push(base64);
             processed++;
-            if (processed === files.length) {
+            if (total > 1 && processed < total) showToast('正在处理 ' + processed + '/' + total + ' 张...');
+            if (processed + failed === total) {
               renderPrepImagesPreview();
-              showToast('已上传 ' + processed + ' 张');
+              showToast('已上传 ' + processed + ' 张参考图');
             }
-          }).catch(function () { processed++; });
+          }).catch(function () { failed++; });
         })(files[f]);
       }
       prepImgInput.value = '';
@@ -5942,23 +6038,33 @@ function togglePrepView() {
     });
   }
 
-  // 视频文件导入
+  // 视频文件导入（支持批量）
   var videoImportArea = document.getElementById('video-import-area');
   var videoFileInput = document.getElementById('video-file-input');
   if (videoImportArea && videoFileInput) {
     videoImportArea.addEventListener('click', function () { videoFileInput.click(); });
     videoFileInput.addEventListener('change', function () {
-      if (videoFileInput.files[0]) { handleVideoFileSelect(videoFileInput.files[0]); videoFileInput.value = ''; }
+      var files = videoFileInput.files;
+      if (!files || files.length === 0) return;
+      videoFileInput.value = '';
+      if (files.length === 1) { handleVideoFileSelect(files[0]); return; }
+      // 批量：每个文件创建一个媒体项
+      batchSaveMediaFiles(files, 'video');
     });
   }
 
-  // 音频文件导入
+  // 音频文件导入（支持批量）
   var audioImportArea = document.getElementById('audio-import-area');
   var audioFileInput = document.getElementById('audio-file-input');
   if (audioImportArea && audioFileInput) {
     audioImportArea.addEventListener('click', function () { audioFileInput.click(); });
     audioFileInput.addEventListener('change', function () {
-      if (audioFileInput.files[0]) { handleAudioFileSelect(audioFileInput.files[0]); audioFileInput.value = ''; }
+      var files = audioFileInput.files;
+      if (!files || files.length === 0) return;
+      audioFileInput.value = '';
+      if (files.length === 1) { handleAudioFileSelect(files[0]); return; }
+      // 批量：每个文件创建一个媒体项
+      batchSaveMediaFiles(files, 'music');
     });
   }
 
